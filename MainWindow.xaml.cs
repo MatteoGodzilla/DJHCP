@@ -86,10 +86,37 @@ namespace DJHCP
     public partial class MainWindow : Window
     {
         public static List<XmlNode> nodes = new List<XmlNode>();
+        public static List<XmlNode> removedNodes = new List<XmlNode>();
 
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void saveRemoved()
+        {
+            if (removedNodes.Count > 0)
+            {
+                string t = string.Empty;
+                t += "<TrackList>";
+                foreach (XmlNode n in removedNodes)
+                {
+                    t += "<Track ";
+                    foreach (XmlAttribute attribute in n.Attributes)
+                    {
+                        t += attribute.Name;
+                        t += "=\"";
+                        t += attribute.Value;
+                        t += "\" ";
+                    }
+                    t += ">";
+                    t += n.InnerXml;
+                    t += "</Track>";
+                }
+                t += "</TrackList>";
+                File.WriteAllText("removedTracks.xml", t);
+            }
+
         }
 
         private void LoadXml(XmlNode root)
@@ -106,6 +133,69 @@ namespace DJHCP
                 }
             }
             TrackListing.ItemsSource = nodes;
+        }
+
+        private void LoadJson(string path)
+        {
+            string jsonText = File.ReadAllText(path);
+            Custom custom = JsonConvert.DeserializeObject<Custom>(jsonText);
+            string xml = "<Track ingame=\"true\" ondisc=\"true\" selectableinfem=\"yes\">";
+
+            xml += "<IDTag>" + custom.song.songId + "</IDTag>";
+            xml += "<LeaderboardId />";
+            xml += "<IsTutorialTrack>0</IsTutorialTrack>";
+            xml += "<HasVocalMarkup>0</HasVocalMarkup>";
+            xml += "<BPM>" + custom.difficulty.bpm + "</BPM>";
+            xml += @"<FolderLocation>AUDIO\Audiotracks\" + custom.song.songId + "</FolderLocation>";
+
+            xml += "<DeckSpeedMultiplier Difficulty=\"0\">" + custom.difficulty.deck_speed.deckspeed_beginner + "</DeckSpeedMultiplier>";
+            xml += "<DeckSpeedMultiplier Difficulty=\"1\">" + custom.difficulty.deck_speed.deckspeed_easy + "</DeckSpeedMultiplier>";
+            xml += "<DeckSpeedMultiplier Difficulty=\"2\">" + custom.difficulty.deck_speed.deckspeed_medium + "</DeckSpeedMultiplier>";
+            xml += "<DeckSpeedMultiplier Difficulty=\"3\">" + custom.difficulty.deck_speed.deckspeed_hard + "</DeckSpeedMultiplier>";
+            xml += "<DeckSpeedMultiplier Difficulty=\"4\">" + custom.difficulty.deck_speed.deckspeed_expert + "</DeckSpeedMultiplier>";
+            xml += "<PreviewLoopPointStartInBars>" + custom.song.preview_start_time + "</PreviewLoopPointStartInBars>";
+            xml += "<PreviewLoopPointEndInBars>" + custom.song.preview_end_time + "</PreviewLoopPointEndInBars>";
+
+            xml += "<TrackComplexity>" + custom.difficulty.complexity.track_complexity + "</TrackComplexity>";
+            xml += "<TapComplexity>" + custom.difficulty.complexity.tap_complexity + "</TapComplexity>";
+            xml += "<CrossfadeComplexity>" + custom.difficulty.complexity.cross_complexity + "</CrossfadeComplexity>";
+            xml += "<ScratchComplexity>" + custom.difficulty.complexity.scratch_complexity + "</ScratchComplexity>";
+
+            xml += "<MixArtist>" + custom.extra.id.id_artist + "</MixArtist>";
+            if (custom.extra.id.id_artist2 != string.Empty)
+            {
+                xml += "<MixArtist>" + custom.extra.id.id_artist2 + "</MixArtist>";
+            }
+
+            xml += "<MixName>" + custom.extra.id.id_name + "</MixName>";
+            if (custom.extra.id.id_name2 != string.Empty)
+            {
+                xml += "<MixName>" + custom.extra.id.id_name2 + "</MixName>";
+            }
+
+            xml += "<TrackDuration>" + custom.song.song_length + "</TrackDuration>";
+            xml += custom.extra.additional_xml;
+            xml += "</Track>";
+
+
+            XmlDocument document = new XmlDocument();
+
+            try
+            {
+                document.LoadXml(xml);
+                XmlNode node = document.DocumentElement;
+
+                TrackListing.ItemsSource = null;
+                nodes.Add(node);
+                TrackListing.ItemsSource = nodes;
+                System.Windows.MessageBox.Show("Successfully added song to list", "Successfully added song to list");
+            }
+            catch (System.Xml.XmlException error)
+            {
+                System.Windows.MessageBox.Show("Error while adding song :" + error.Message,
+                    "Xml error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+
         }
 
         private void TrackListing_AddingNewItem(object sender, System.Windows.Controls.AddingNewItemEventArgs e)
@@ -175,66 +265,7 @@ namespace DJHCP
             OpenFileDialog dialog = new OpenFileDialog();
             if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                string jsonText = File.ReadAllText(dialog.FileName);
-                Custom custom = JsonConvert.DeserializeObject<Custom>(jsonText);
-                string xml = "<Track ingame=\"true\" ondisc=\"true\" selectableinfem=\"yes\">";
-
-                xml += "<IDTag>" + custom.song.songId + "</IDTag>";
-                xml += "<LeaderboardId />";
-                xml += "<IsTutorialTrack>0</IsTutorialTrack>";
-                xml += "<HasVocalMarkup>0</HasVocalMarkup>";
-                xml += "<BPM>" + custom.difficulty.bpm + "</BPM>";
-                xml += @"<FolderLocation>AUDIO\Audiotracks\" + custom.song.songId + "</FolderLocation>";
-
-                xml += "<DeckSpeedMultiplier Difficulty=\"0\">" + custom.difficulty.deck_speed.deckspeed_beginner + "</DeckSpeedMultiplier>";
-                xml += "<DeckSpeedMultiplier Difficulty=\"1\">" + custom.difficulty.deck_speed.deckspeed_easy + "</DeckSpeedMultiplier>";
-                xml += "<DeckSpeedMultiplier Difficulty=\"2\">" + custom.difficulty.deck_speed.deckspeed_medium + "</DeckSpeedMultiplier>";
-                xml += "<DeckSpeedMultiplier Difficulty=\"3\">" + custom.difficulty.deck_speed.deckspeed_hard + "</DeckSpeedMultiplier>";
-                xml += "<DeckSpeedMultiplier Difficulty=\"4\">" + custom.difficulty.deck_speed.deckspeed_expert + "</DeckSpeedMultiplier>";
-                xml += "<PreviewLoopPointStartInBars>" + custom.song.preview_start_time + "</PreviewLoopPointStartInBars>";
-                xml += "<PreviewLoopPointEndInBars>" + custom.song.preview_end_time + "</PreviewLoopPointEndInBars>";
-
-                xml += "<TrackComplexity>" + custom.difficulty.complexity.track_complexity + "</TrackComplexity>";
-                xml += "<TapComplexity>" + custom.difficulty.complexity.tap_complexity + "</TapComplexity>";
-                xml += "<CrossfadeComplexity>" + custom.difficulty.complexity.cross_complexity + "</CrossfadeComplexity>";
-                xml += "<ScratchComplexity>" + custom.difficulty.complexity.scratch_complexity + "</ScratchComplexity>";
-
-                xml += "<MixArtist>" + custom.extra.id.id_artist + "</MixArtist>";
-                if(custom.extra.id.id_artist2 != string.Empty)
-                {
-                    xml += "<MixArtist>" + custom.extra.id.id_artist2 + "</MixArtist>";
-                }
-
-                xml += "<MixName>" + custom.extra.id.id_name + "</MixName>";
-                if(custom.extra.id.id_name2 != string.Empty)
-                {
-                    xml += "<MixName>" + custom.extra.id.id_name2 + "</MixName>";
-                }
-
-                xml += "<TrackDuration>" + custom.song.song_length + "</TrackDuration>";
-                xml += custom.extra.additional_xml;
-                xml += "</Track>";
-
-
-                XmlDocument document = new XmlDocument();
-
-                try
-                {
-                    document.LoadXml(xml);
-                    XmlNode node = document.DocumentElement;
-
-                    TrackListing.ItemsSource = null;
-                    nodes.Add(node);
-                    TrackListing.ItemsSource = nodes;
-                    System.Windows.MessageBox.Show("Successfully added song to list", "Successfully added song to list");
-                }
-                catch (System.Xml.XmlException error)
-                {
-                    System.Windows.MessageBox.Show("Error while adding song :" + error.Message,
-                        "Xml error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-
-                
+                LoadJson(dialog.FileName);
             }
         }
 
@@ -264,6 +295,8 @@ namespace DJHCP
                 s += "</TrackList>";
                 File.WriteAllText(saveFileDialog.FileName, s);
             }
+
+            saveRemoved();
         }
 
         private void Convert(object sender, RoutedEventArgs e)
@@ -297,9 +330,74 @@ namespace DJHCP
             }
         }
 
-        private void addFromXml(object sender, RoutedEventArgs e)
+        private void Button_Drop(object sender, System.Windows.DragEventArgs e)
         {
+            string[] paths = (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
+            XmlDocument xml = new XmlDocument();
+            try
+            {
+                xml.Load(paths[0]);
 
+                //convert
+                Custom conversion = new Custom();
+                conversion.song.first.name = xml.SelectNodes("MixName")[0].InnerText;
+
+                SaveFileDialog saveFileDialog = new SaveFileDialog();
+                saveFileDialog.Title = "Save song.json";
+                saveFileDialog.Filter = "json file|*.json";
+                if (saveFileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    File.WriteAllText(saveFileDialog.FileName, JsonConvert.SerializeObject(conversion));
+                }
+
+            }
+            catch (System.Xml.XmlException)
+            {
+                System.Windows.MessageBox.Show("Cannot read file as Xml.\nMake sure the file is a valid Xml file",
+                    "Xml error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void Button_Drop_1(object sender, System.Windows.DragEventArgs e)
+        {
+            string[] paths = (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
+            XmlDocument xml = new XmlDocument();
+            xml.Load(paths[0]);
+            LoadXml(xml.DocumentElement);
+        }
+
+        private void addCustomButton_Drop(object sender, System.Windows.DragEventArgs e)
+        {
+            string[] paths = (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
+            LoadJson(paths[0]);
+        }
+
+        private void Tracklisting_confirmRemove(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if(e.Key == System.Windows.Input.Key.Delete)
+            {
+                string main = "Do you want to delete the selected entries?\nThis action is PERMANENT";
+                string title = "Are you sure about that?";
+                if(System.Windows.MessageBox.Show(main,title,MessageBoxButton.YesNo,MessageBoxImage.Warning) == MessageBoxResult.Yes)
+                {
+                    System.Collections.ArrayList arrayList = new System.Collections.ArrayList(TrackListing.SelectedItems);
+                    
+                    for(int i = arrayList.Count-1; i >= 0; i--)
+                    {
+                        int index = TrackListing.Items.IndexOf(arrayList[i]);
+                        TrackListing.ItemsSource = null;
+                        XmlNode removed = nodes[index];
+                        nodes.RemoveAt(index);
+                        removedNodes.Add(removed);
+                        TrackListing.ItemsSource = nodes;
+                    }
+                }
+            }
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            saveRemoved();
         }
     }
 }

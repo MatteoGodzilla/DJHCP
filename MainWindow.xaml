@@ -6,25 +6,19 @@
         xmlns:local="clr-namespace:DJHCP"
         mc:Ignorable="d"
         ResizeMode="CanMinimize"
-        Title="DJHCP" Height="500" Width="800" Background="White">
+        Title="DJHCP" Height="500" Width="800" Background="White" Closing="Window_Closing">
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition/>
-        </Grid.ColumnDefinitions>
-        <Button x:Name="Button" Content="Add From Xml" HorizontalAlignment="Left" Margin="214,356,0,0" VerticalAlignment="Top" Width="177" Height="104" Click="Button_Click" FontSize="20" IsDefault="True"/>
+        <Button x:Name="Button" Content="Add From Xml" HorizontalAlignment="Left" Margin="214,356,0,0" VerticalAlignment="Top" Width="177" Height="88" Click="Button_Click" FontSize="20" IsDefault="True" AllowDrop="True" Drop="Button_Drop_1"/>
         <DataGrid x:Name="TrackListing" HorizontalAlignment="Left" Height="341" Margin="10,10,0,0" VerticalAlignment="Top" Width="548" 
-                    IsSynchronizedWithCurrentItem="False" AutoGenerateColumns="False" CanUserAddRows="False" CanUserReorderColumns="True" SelectionChanged="TrackListing_SelectionChanged" Grid.ColumnSpan="2">
+                    IsSynchronizedWithCurrentItem="False" AutoGenerateColumns="False" CanUserAddRows="False" CanUserReorderColumns="True" SelectionChanged="TrackListing_SelectionChanged" KeyUp="Tracklisting_confirmRemove" CanUserDeleteRows="False">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Id" Binding="{Binding XPath=IDTag}"/>
                 <DataGridTextColumn Header="Folder location" Binding="{Binding XPath=FolderLocation}"/>
             </DataGrid.Columns>
         </DataGrid>
-        <Button x:Name="addCustomButton" Content="Add From Json" HorizontalAlignment="Left" Margin="396,356,0,10.4" Width="162" FontSize="20" Click="addCustomButton_Click"/>
-        <Button Content="Update File" HorizontalAlignment="Left" Margin="10,356,0,0" VerticalAlignment="Top" Width="216" Grid.Column="1" Height="105" FontSize="20" Click="UpdateFile"/>
-        <ListBox x:Name="proprieties" Grid.Column="1" HorizontalAlignment="Left" Height="341" Margin="10.4,10,0,0" VerticalAlignment="Top" Width="216">
-
-        </ListBox>
-        <Button Content="Convert XML to Json" HorizontalAlignment="Left" Margin="10,356,0,0" VerticalAlignment="Top" Width="199" Height="105" FontSize="20" Click="Convert"/>
+        <Button x:Name="addCustomButton" Content="Add From Json" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="396,356,0,0" Width="162" Height="88" FontSize="20" Click="addCustomButton_Click" AllowDrop="True" Drop="addCustomButton_Drop"/>
+        <Button Content="Update File" HorizontalAlignment="Left" Margin="568,356,0,0" VerticalAlignment="Top" Width="216" Height="88" FontSize="20" Click="UpdateFile"/>
+        <ListBox x:Name="proprieties" HorizontalAlignment="Left" Height="341" Margin="568,10,0,0" VerticalAlignment="Top" Width="216"/>
+        <Button Content="Convert XML to Json" HorizontalAlignment="Left" Margin="10,356,0,0" VerticalAlignment="Top" Width="199" Height="88" FontSize="20" Click="Convert" Drop="Button_Drop" AllowDrop="True"/>
     </Grid>
 </Window>
