@@ -228,35 +228,123 @@ namespace DJHCP
             {
                 proprieties.Items.Clear();
                 XmlNode selected = nodes[TrackListing.SelectedIndex];
-                string s = "Artist 1:" + selected.SelectNodes("MixArtist")[0].InnerText;
-                proprieties.Items.Add(new Label().Text = s);
-                string s2 = "Name 1:" + selected.SelectNodes("MixName")[0].InnerText;
-                proprieties.Items.Add(new Label().Text = s2);
+                if(selected.SelectNodes("MixArtist").Count > 0)
+                {
+                    string s = "Artist 1:" + selected.SelectNodes("MixArtist")[0].InnerText;
+                    proprieties.Items.Add(new Label().Text = s);
+                }
+                else
+                {
+                    string s = "Artist 1: !MISSING!";
+                    proprieties.Items.Add(new Label().Text = s);
+                }
+
+                if (selected.SelectNodes("MixName").Count > 0)
+                {
+                    string s2 = "Name 1:" + selected.SelectNodes("MixName")[0].InnerText;
+                    proprieties.Items.Add(new Label().Text = s2);
+                }
+                else
+                {
+                    string s2 = "Name 1: !MISSING!"; 
+                    proprieties.Items.Add(new Label().Text = s2);
+                }
                 if (selected.SelectNodes("MixArtist").Count > 1)
                 {
                     string s3 = "Artist 2:" + selected.SelectNodes("MixArtist")[1].InnerText;
                     proprieties.Items.Add(new Label().Text = s3);
                 }
+                else
+                {
+                    string s3 = "Artist 2: !MISSING!";
+                    proprieties.Items.Add(new Label().Text = s3);
+                }
                 if (selected.SelectNodes("MixName").Count > 1)
                 {
-                    string s4 = "Name 2:" + selected.SelectNodes("MixName")[1].InnerText;
+                    string s4 = "Name 2: " + selected.SelectNodes("MixName")[1].InnerText;
                     proprieties.Items.Add(new Label().Text = s4);
                 }
-                if (selected.SelectSingleNode("MixHeadline") != null)
+                else
                 {
-                    string s5 = "Mixer :" + selected.SelectSingleNode("MixHeadline").InnerText;
+                    string s4 = "Name 2: !MISSING";
+                    proprieties.Items.Add(new Label().Text = s4);
+                }
+                if(selected.SelectSingleNode("MixHeadlineDJName") != null)
+                {
+                    string s5 = "Mixer Dj Name:" + selected.SelectSingleNode("MixHeadlineDJName").InnerText;
+                    proprieties.Items.Add(new Label().Text = s5);
+
+                }
+                else
+                {
+                    string s5 = "Mixer Dj Name:!MISSING!";
                     proprieties.Items.Add(new Label().Text = s5);
                 }
-                string s6 = "BPM :" + selected.SelectSingleNode("BPM").InnerText;
-                proprieties.Items.Add(new Label().Text = s6);
-                string s7 = "Track Complexity :" + selected.SelectSingleNode("TrackComplexity").InnerText;
-                proprieties.Items.Add(new Label().Text = s7);
-                string s8 = "Tap Complexity :" + selected.SelectSingleNode("TapComplexity").InnerText;
-                proprieties.Items.Add(new Label().Text = s8);
-                string s9 = "Crossfade Complexity :" + selected.SelectSingleNode("CrossfadeComplexity").InnerText;
-                proprieties.Items.Add(new Label().Text = s9);
-                string s10 = "Scratch Complexity :" + selected.SelectSingleNode("ScratchComplexity").InnerText;
-                proprieties.Items.Add(new Label().Text = s10);
+
+                if (selected.SelectSingleNode("MixHeadline") != null)
+                {
+                    string s5 = "Mixer:" + selected.SelectSingleNode("MixHeadline").InnerText;
+                    proprieties.Items.Add(new Label().Text = s5);
+                }
+                else
+                {
+                    string s5 = "Mixer: !MISSING!";
+                    proprieties.Items.Add(new Label().Text = s5);
+                }
+
+                if(selected.SelectSingleNode("BPM") != null)
+                {
+                    string s6 = "BPM: " + selected.SelectSingleNode("BPM").InnerText;
+                    proprieties.Items.Add(new Label().Text = s6);
+                }
+                else
+                {
+                    string s6 = "BPM: !MISSING!";
+                    proprieties.Items.Add(new Label().Text = s6);
+                }
+
+                if(selected.SelectSingleNode("TrackComplexity") != null)
+                {
+                    string s7 = "Track Complexity: " + selected.SelectSingleNode("TrackComplexity").InnerText;
+                    proprieties.Items.Add(new Label().Text = s7);
+                }
+                else
+                {
+                    string s7 = "Track Complexity: !MISSING!" ;
+                    proprieties.Items.Add(new Label().Text = s7);
+                }
+
+                if (selected.SelectSingleNode("TapComplexity") != null)
+                {
+                    string s8 = "Tap Complexity: " + selected.SelectSingleNode("TapComplexity").InnerText;
+                    proprieties.Items.Add(new Label().Text = s8);
+                }
+                else
+                {
+                    string s8 = "Tap Complexity: !MISSING!" ;
+                    proprieties.Items.Add(new Label().Text = s8);
+                }
+
+                if(selected.SelectSingleNode("CrossfadeComplexity") != null)
+                {
+                    string s9 = "Crossfade Complexity: " + selected.SelectSingleNode("CrossfadeComplexity").InnerText;
+                    proprieties.Items.Add(new Label().Text = s9);
+                }
+                else
+                {
+                    string s9 = "Crossfade Complexity: !MISSING!";
+                    proprieties.Items.Add(new Label().Text = s9);
+                }
+                if (selected.SelectSingleNode("ScratchComplexity") != null)
+                {
+                    string s10 = "Scratch Complexity: " + selected.SelectSingleNode("ScratchComplexity").InnerText;
+                    proprieties.Items.Add(new Label().Text = s10);
+                }
+                else
+                {
+                    string s10 = "Scratch Complexity: !MISSING!";
+                    proprieties.Items.Add(new Label().Text = s10);
+                }
             }
         }
 
