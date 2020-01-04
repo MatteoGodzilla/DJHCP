@@ -1,7 +1,6 @@
 C:\Users\caten\DJHCP\DJHCP\bin\Debug\DJHCP.exe.config
 C:\Users\caten\DJHCP\DJHCP\bin\Debug\DJHCP.exe
 C:\Users\caten\DJHCP\DJHCP\bin\Debug\DJHCP.pdb
-C:\Users\caten\DJHCP\DJHCP\obj\Debug\DJHCP.csprojAssemblyReference.cache
 C:\Users\caten\DJHCP\DJHCP\obj\Debug\MainWindow.g.cs
 C:\Users\caten\DJHCP\DJHCP\obj\Debug\App.g.cs
 C:\Users\caten\DJHCP\DJHCP\obj\Debug\DJHCP_MarkupCompile.cache
@@ -17,3 +16,4 @@ C:\Users\caten\DJHCP\DJHCP\bin\Debug\INIFileParser.xml
 C:\Users\caten\DJHCP\DJHCP\obj\Debug\DJHCP.csproj.CopyComplete
 C:\Users\caten\DJHCP\DJHCP\bin\Debug\Newtonsoft.Json.dll
 C:\Users\caten\DJHCP\DJHCP\bin\Debug\Newtonsoft.Json.xml
+C:\Users\caten\DJHCP\DJHCP\obj\Debug\DJHCP.csprojAssemblyReference.cache

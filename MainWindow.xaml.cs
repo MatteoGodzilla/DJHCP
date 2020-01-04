@@ -96,7 +96,6 @@ namespace DJHCP
         {
             TrackListing.ItemsSource = null;
             XmlNodeList list = root.ChildNodes;
-            nodes.Clear();
             for (int i = 0; i < list.Count; ++i)
             {
                 XmlNode node = list.Item(i);
@@ -265,6 +264,42 @@ namespace DJHCP
                 s += "</TrackList>";
                 File.WriteAllText(saveFileDialog.FileName, s);
             }
+        }
+
+        private void Convert(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog dialog = new OpenFileDialog();
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                XmlDocument xml = new XmlDocument();
+                try
+                {
+                    xml.Load(dialog.FileName);
+
+                    //convert
+                    Custom conversion = new Custom();
+                    conversion.song.first.name = xml.SelectNodes("MixName")[0].InnerText;
+
+                    SaveFileDialog saveFileDialog = new SaveFileDialog();
+                    saveFileDialog.Title = "Save song.json";
+                    saveFileDialog.Filter = "json file|*.json";
+                    if (saveFileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                    {
+                        File.WriteAllText(saveFileDialog.FileName, JsonConvert.SerializeObject(conversion));
+                    }
+
+                }
+                catch (System.Xml.XmlException)
+                {
+                    System.Windows.MessageBox.Show("Cannot read file as Xml.\nMake sure the file is a valid Xml file",
+                        "Xml error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void addFromXml(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }
