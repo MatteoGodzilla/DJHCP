@@ -8,7 +8,7 @@
         ResizeMode="CanMinimize"
         Title="DJHCP" Height="500" Width="800" Background="White" Closing="Window_Closing">
     <Grid>
-        <Button x:Name="Button" Content="Add From Xml" HorizontalAlignment="Left" Margin="214,356,0,0" VerticalAlignment="Top" Width="177" Height="88" Click="Button_Click" FontSize="20" IsDefault="True" AllowDrop="True" Drop="Button_Drop_1"/>
+        <Button x:Name="Button" Content="Add Custom" HorizontalAlignment="Left" Margin="214,356,0,0" VerticalAlignment="Top" Width="344" Height="88" Click="AddCustom" FontSize="20" IsDefault="True" AllowDrop="True" Drop="AddCustomButtonDrop"/>
         <DataGrid x:Name="TrackListing" HorizontalAlignment="Left" Height="341" Margin="10,10,0,0" VerticalAlignment="Top" Width="548" 
                     IsSynchronizedWithCurrentItem="False" AutoGenerateColumns="False" CanUserAddRows="False" CanUserReorderColumns="True" SelectionChanged="TrackListing_SelectionChanged" KeyUp="Tracklisting_confirmRemove" CanUserDeleteRows="False">
             <DataGrid.Columns>
@@ -16,9 +16,9 @@
                 <DataGridTextColumn Header="Folder location" Binding="{Binding XPath=FolderLocation}"/>
             </DataGrid.Columns>
         </DataGrid>
-        <Button x:Name="addCustomButton" Content="Add From Json" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="396,356,0,0" Width="162" Height="88" FontSize="20" Click="addCustomButton_Click" AllowDrop="True" Drop="addCustomButton_Drop"/>
         <Button Content="Update File" HorizontalAlignment="Left" Margin="568,356,0,0" VerticalAlignment="Top" Width="216" Height="88" FontSize="20" Click="UpdateFile"/>
-        <ListBox x:Name="proprieties" HorizontalAlignment="Left" Height="341" Margin="568,10,0,0" VerticalAlignment="Top" Width="216"/>
+        <ListBox x:Name="proprieties" HorizontalAlignment="Left" Height="291" Margin="568,60,0,0" VerticalAlignment="Top" Width="216"/>
         <Button Content="Convert XML to Json" HorizontalAlignment="Left" Margin="10,356,0,0" VerticalAlignment="Top" Width="199" Height="88" FontSize="20" Click="Convert" Drop="Button_Drop" AllowDrop="True"/>
+        <Button Content="Open Extracted files" HorizontalAlignment="Left" Margin="568,10,0,0" VerticalAlignment="Top" Width="216" Height="45" FontSize="20" Click="OpenExtractedFiles"/>
     </Grid>
 </Window>

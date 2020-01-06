@@ -87,6 +87,9 @@ namespace DJHCP
     {
         public static List<XmlNode> nodes = new List<XmlNode>();
         public static List<XmlNode> removedNodes = new List<XmlNode>();
+        public string baseFolder = string.Empty;
+        public List<string> textFiles = new List<string>();
+        public Dictionary<string, string> tracStrings = new Dictionary<string, string>();
 
         public MainWindow()
         {
@@ -129,7 +132,6 @@ namespace DJHCP
                 if (node.Name == "Track")
                 {
                     nodes.Add(node);
-                    
                 }
             }
             TrackListing.ItemsSource = nodes;
@@ -203,7 +205,7 @@ namespace DJHCP
             throw new System.NotImplementedException();
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private void AddCustom(object sender, RoutedEventArgs e)
         {
             OpenFileDialog dialog = new OpenFileDialog();
             if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
@@ -213,24 +215,69 @@ namespace DJHCP
                 {
                     xml.Load(dialog.FileName);
                     LoadXml(xml.DocumentElement);
+
+                    string namesPath = dialog.FileName + @"\..\info for trac.csv";
+                    StreamReader reader = new StreamReader(namesPath);
+
+                    string line = string.Empty;
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        if (line.Contains("//")) continue;
+                        if (string.IsNullOrEmpty(line)) continue;
+                        string[] content;
+                        content = line.Split(',');
+                        if (!tracStrings.ContainsKey(content[0]))
+                        {
+                            tracStrings.Add(content[0], content[1]);
+                        }
+                    }
+
+                    string dir = new List<string>(Directory.EnumerateDirectories(dialog.FileName + @"\..\"))[0];
+
+                    List<string> tree = new List<string>(dir.Split('\\'));
+
+                    string dirName = tree[tree.Count - 1];
+
+                    DirectoryInfo files = new DirectoryInfo(dir);
+
+                    System.IO.Directory.CreateDirectory(baseFolder + @"\AUDIO\Audiotracks\" + dirName);
+
+                    var data = files.EnumerateFiles();
+
+                    foreach (FileInfo f in data)
+                    {
+                        string destinationPath = baseFolder + @"\AUDIO\Audiotracks\" + dirName + "\\" + f.Name;
+                        System.Windows.MessageBox.Show(destinationPath);
+                        System.IO.File.Copy(f.FullName, destinationPath);
+                    }
+
                 }
-                catch (System.Xml.XmlException)
+                catch
                 {
-                    System.Windows.MessageBox.Show("Cannot read file as Xml.\nMake sure the file is a valid Xml file",
-                        "Xml error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    System.Windows.MessageBox.Show("Cannot read file.\nMake sure the folder is a valid custom folder",
+                        "Parsing error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
 
         }
         private void TrackListing_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            if(TrackListing.SelectedIndex != -1)
+            if (TrackListing.SelectedIndex != -1)
             {
                 proprieties.Items.Clear();
                 XmlNode selected = nodes[TrackListing.SelectedIndex];
-                if(selected.SelectNodes("MixArtist").Count > 0)
+                if (selected.SelectNodes("MixArtist").Count > 0)
                 {
-                    string s = "Artist 1:" + selected.SelectNodes("MixArtist")[0].InnerText;
+                    string id = selected.SelectNodes("MixArtist")[0].InnerText;
+                    string s;
+                    if (tracStrings.ContainsKey(id))
+                    {
+                        s = "Artist 1: " + tracStrings[id];
+                    }
+                    else
+                    {
+                        s = "Artist 1:" + id;
+                    }
                     proprieties.Items.Add(new Label().Text = s);
                 }
                 else
@@ -241,18 +288,36 @@ namespace DJHCP
 
                 if (selected.SelectNodes("MixName").Count > 0)
                 {
-                    string s2 = "Name 1:" + selected.SelectNodes("MixName")[0].InnerText;
-                    proprieties.Items.Add(new Label().Text = s2);
+                    string id = selected.SelectNodes("MixName")[0].InnerText;
+                    string s;
+                    if (tracStrings.ContainsKey(id))
+                    {
+                        s = "Name 1:" + tracStrings[id];
+                    }
+                    else
+                    {
+                        s = "Name 1:" + id;
+                    }
+                    proprieties.Items.Add(new Label().Text = s);
                 }
                 else
                 {
-                    string s2 = "Name 1: !MISSING!"; 
+                    string s2 = "Name 1: !MISSING!";
                     proprieties.Items.Add(new Label().Text = s2);
                 }
                 if (selected.SelectNodes("MixArtist").Count > 1)
                 {
-                    string s3 = "Artist 2:" + selected.SelectNodes("MixArtist")[1].InnerText;
-                    proprieties.Items.Add(new Label().Text = s3);
+                    string id = selected.SelectNodes("MixArtist")[1].InnerText;
+                    string s;
+                    if (tracStrings.ContainsKey(id))
+                    {
+                        s = "Artist 2:" + tracStrings[id];
+                    }
+                    else
+                    {
+                        s = "Artist 2:" + id;
+                    }
+                    proprieties.Items.Add(new Label().Text = s);
                 }
                 else
                 {
@@ -261,18 +326,36 @@ namespace DJHCP
                 }
                 if (selected.SelectNodes("MixName").Count > 1)
                 {
-                    string s4 = "Name 2: " + selected.SelectNodes("MixName")[1].InnerText;
-                    proprieties.Items.Add(new Label().Text = s4);
+                    string id = selected.SelectNodes("MixName")[1].InnerText;
+                    string s;
+                    if (tracStrings.ContainsKey(id))
+                    {
+                        s = "Name 2: " + tracStrings[id];
+                    }
+                    else
+                    {
+                        s = "Name 2: " + id;
+                    }
+                    proprieties.Items.Add(new Label().Text = s);
                 }
                 else
                 {
                     string s4 = "Name 2: !MISSING";
                     proprieties.Items.Add(new Label().Text = s4);
                 }
-                if(selected.SelectSingleNode("MixHeadlineDJName") != null)
+                if (selected.SelectSingleNode("MixHeadlineDJName") != null)
                 {
-                    string s5 = "Mixer Dj Name:" + selected.SelectSingleNode("MixHeadlineDJName").InnerText;
-                    proprieties.Items.Add(new Label().Text = s5);
+                    string id = selected.SelectSingleNode("MixHeadlineDJName").InnerText;
+                    string s;
+                    if (tracStrings.ContainsKey(id))
+                    {
+                        s = "Mixer Dj Name:" + tracStrings[id];
+                    }
+                    else
+                    {
+                        s = "Mixer Dj Name:" + id;
+                    }
+                    proprieties.Items.Add(new Label().Text = s);
 
                 }
                 else
@@ -283,8 +366,17 @@ namespace DJHCP
 
                 if (selected.SelectSingleNode("MixHeadline") != null)
                 {
-                    string s5 = "Mixer:" + selected.SelectSingleNode("MixHeadline").InnerText;
-                    proprieties.Items.Add(new Label().Text = s5);
+                    string id = selected.SelectSingleNode("MixHeadline").InnerText;
+                    string s;
+                    if (tracStrings.ContainsKey(id))
+                    {
+                        s = "Mixer:" + tracStrings[id];
+                    }
+                    else
+                    {
+                        s = "Mixer:" + id;
+                    }
+                    proprieties.Items.Add(new Label().Text = s);
                 }
                 else
                 {
@@ -292,7 +384,7 @@ namespace DJHCP
                     proprieties.Items.Add(new Label().Text = s5);
                 }
 
-                if(selected.SelectSingleNode("BPM") != null)
+                if (selected.SelectSingleNode("BPM") != null)
                 {
                     string s6 = "BPM: " + selected.SelectSingleNode("BPM").InnerText;
                     proprieties.Items.Add(new Label().Text = s6);
@@ -303,14 +395,14 @@ namespace DJHCP
                     proprieties.Items.Add(new Label().Text = s6);
                 }
 
-                if(selected.SelectSingleNode("TrackComplexity") != null)
+                if (selected.SelectSingleNode("TrackComplexity") != null)
                 {
                     string s7 = "Track Complexity: " + selected.SelectSingleNode("TrackComplexity").InnerText;
                     proprieties.Items.Add(new Label().Text = s7);
                 }
                 else
                 {
-                    string s7 = "Track Complexity: !MISSING!" ;
+                    string s7 = "Track Complexity: !MISSING!";
                     proprieties.Items.Add(new Label().Text = s7);
                 }
 
@@ -321,11 +413,11 @@ namespace DJHCP
                 }
                 else
                 {
-                    string s8 = "Tap Complexity: !MISSING!" ;
+                    string s8 = "Tap Complexity: !MISSING!";
                     proprieties.Items.Add(new Label().Text = s8);
                 }
 
-                if(selected.SelectSingleNode("CrossfadeComplexity") != null)
+                if (selected.SelectSingleNode("CrossfadeComplexity") != null)
                 {
                     string s9 = "Crossfade Complexity: " + selected.SelectSingleNode("CrossfadeComplexity").InnerText;
                     proprieties.Items.Add(new Label().Text = s9);
@@ -348,22 +440,12 @@ namespace DJHCP
             }
         }
 
-        private void addCustomButton_Click(object sender, RoutedEventArgs e)
-        {
-            OpenFileDialog dialog = new OpenFileDialog();
-            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                LoadJson(dialog.FileName);
-            }
-        }
-
         private void UpdateFile(object sender, RoutedEventArgs e)
         {
-            SaveFileDialog saveFileDialog = new SaveFileDialog();
-            saveFileDialog.Title = "Save tracklisting.xml";
-            saveFileDialog.Filter = "xml file|*.xml";
-            if (saveFileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            if (baseFolder != string.Empty)
             {
+
+                string path = baseFolder + @"\AUDIO\Audiotracks\tracklisting.xml";
                 string s = string.Empty;
                 s += "<TrackList>";
                 foreach (XmlNode n in nodes)
@@ -381,10 +463,33 @@ namespace DJHCP
                     s += "</Track>";
                 }
                 s += "</TrackList>";
-                File.WriteAllText(saveFileDialog.FileName, s);
-            }
+                File.WriteAllText(path, s);
 
-            saveRemoved();
+                saveRemoved();
+
+                path = baseFolder + @"\Text\TRAC\";
+                s = string.Empty;
+                List<string> valueList = new List<string>(tracStrings.Values);
+                for (int i = 0; i < tracStrings.Count; ++i)
+                {
+                    s += valueList[i] + "\0";
+                }
+
+                foreach (string p in textFiles)
+                {
+                    File.WriteAllText(p, s);
+                }
+
+                s = string.Empty;
+                List<string> keysList = new List<string>(tracStrings.Keys);
+                for (int i = 0; i < tracStrings.Count; ++i)
+                {
+                    s += keysList[i] + "\r\n";
+                }
+                File.WriteAllText(path + "TRACID.txt", s);
+
+                System.Windows.MessageBox.Show("Done updating files", "Finished");
+            }
         }
 
         private void Convert(object sender, RoutedEventArgs e)
@@ -446,31 +551,69 @@ namespace DJHCP
             }
         }
 
-        private void Button_Drop_1(object sender, System.Windows.DragEventArgs e)
+        private void AddCustomButtonDrop(object sender, System.Windows.DragEventArgs e)
         {
             string[] paths = (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
-            XmlDocument xml = new XmlDocument();
-            xml.Load(paths[0]);
-            LoadXml(xml.DocumentElement);
-        }
 
-        private void addCustomButton_Drop(object sender, System.Windows.DragEventArgs e)
-        {
-            string[] paths = (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
-            LoadJson(paths[0]);
+            XmlDocument xml = new XmlDocument();
+            try
+            {
+                xml.Load(paths[0]);
+                LoadXml(xml.DocumentElement);
+
+                string namesPath = paths[0] + @"\..\info for trac.csv";
+                StreamReader reader = new StreamReader(namesPath);
+
+                string line = string.Empty;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    if (line.Contains("//")) continue;
+                    if (string.IsNullOrEmpty(line)) continue;
+                    string[] content;
+                    content = line.Split(',');
+                    if (!tracStrings.ContainsKey(content[0]))
+                    {
+                        tracStrings.Add(content[0], content[1]);
+                    }
+                }
+
+                string dir = new List<string>(Directory.EnumerateDirectories(paths[0] + @"\..\"))[0];
+
+                List<string> tree = new List<string>(dir.Split('\\'));
+
+                string dirName = tree[tree.Count - 1];
+
+                DirectoryInfo files = new DirectoryInfo(dir);
+
+                System.IO.Directory.CreateDirectory(baseFolder + @"\AUDIO\Audiotracks\" + dirName);
+
+                var data = files.EnumerateFiles();
+
+                foreach (FileInfo f in data)
+                {
+                    string destinationPath = baseFolder + @"\AUDIO\Audiotracks\" + dirName + "\\" + f.Name;
+                    System.IO.File.Copy(f.FullName, destinationPath);
+                }
+
+            }
+            catch
+            {
+                System.Windows.MessageBox.Show("Cannot read file.\nMake sure the folder is a valid custom folder",
+                    "Parsing error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void Tracklisting_confirmRemove(object sender, System.Windows.Input.KeyEventArgs e)
         {
-            if(e.Key == System.Windows.Input.Key.Delete)
+            if (e.Key == System.Windows.Input.Key.Delete)
             {
                 string main = "Do you want to delete the selected entries?\nThis action is PERMANENT";
                 string title = "Are you sure about that?";
-                if(System.Windows.MessageBox.Show(main,title,MessageBoxButton.YesNo,MessageBoxImage.Warning) == MessageBoxResult.Yes)
+                if (System.Windows.MessageBox.Show(main, title, MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
                 {
                     System.Collections.ArrayList arrayList = new System.Collections.ArrayList(TrackListing.SelectedItems);
-                    
-                    for(int i = arrayList.Count-1; i >= 0; i--)
+
+                    for (int i = arrayList.Count - 1; i >= 0; i--)
                     {
                         int index = TrackListing.Items.IndexOf(arrayList[i]);
                         TrackListing.ItemsSource = null;
@@ -486,6 +629,55 @@ namespace DJHCP
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             saveRemoved();
+        }
+
+        private void OpenExtractedFiles(object sender, RoutedEventArgs e)
+        {
+            FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog();
+            folderBrowserDialog.Description = "Open the WII/PS3/X360 folder";
+            if (folderBrowserDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                baseFolder = folderBrowserDialog.SelectedPath;
+                string tracklistingPath = folderBrowserDialog.SelectedPath + @"\AUDIO\Audiotracks\tracklisting.xml";
+                XmlDocument document = new XmlDocument();
+                try
+                {
+                    document.Load(tracklistingPath);
+                    LoadXml(document.DocumentElement);
+
+                    string trackStringFolderPath = folderBrowserDialog.SelectedPath + @"\Text\TRAC";
+
+                    DirectoryInfo info = new DirectoryInfo(trackStringFolderPath);
+
+                    FileInfo[] files = info.GetFiles();
+                    foreach (FileInfo f in files)
+                    {
+                        if (f.Name == "TRACID.txt") continue;
+                        textFiles.Add(f.FullName);
+                    }
+
+                    string[] ids = File.ReadAllText(trackStringFolderPath + @"\TRACID.txt").Split('\n');
+                    string[] values = File.ReadAllText(trackStringFolderPath + @"\TRACE.txt").Split('\0');
+
+                    for (int i = 0; i < ids.Length; ++i)
+                    {
+                        ids[i] = ids[i].Trim('\r');
+                    }
+
+                    for (int i = 0; i < ids.Length; ++i)
+                    {
+                        if (!tracStrings.ContainsKey(ids[i]) && ids[i] != string.Empty)
+                        {
+                            tracStrings.Add(ids[i], values[i]);
+                        }
+                    }
+                }
+                catch
+                {
+                    string message = "ERROR: could not load extracted files.\nCheck if the files are present in the directory";
+                    System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
         }
     }
 }
