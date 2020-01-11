@@ -9,7 +9,7 @@
         Title="DJHCP" Height="500" Width="800" Background="White" Closing="Window_Closing">
     <Grid>
         <Button x:Name="Button" Content="Add Custom" HorizontalAlignment="Left" Margin="214,356,0,0" VerticalAlignment="Top" Width="344" Height="88" Click="AddCustom" FontSize="20" IsDefault="True" AllowDrop="True" Drop="AddCustomButtonDrop"/>
-        <DataGrid x:Name="TrackListing" HorizontalAlignment="Left" Height="341" Margin="10,10,0,0" VerticalAlignment="Top" Width="548" 
+        <DataGrid x:Name="TrackListing" HorizontalAlignment="Left" Height="313" Margin="10,38,0,0" VerticalAlignment="Top" Width="548" 
                     IsSynchronizedWithCurrentItem="False" AutoGenerateColumns="False" CanUserAddRows="False" CanUserReorderColumns="True" SelectionChanged="TrackListing_SelectionChanged" KeyUp="Tracklisting_confirmRemove" CanUserDeleteRows="False">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Id" Binding="{Binding XPath=IDTag}"/>
@@ -20,5 +20,7 @@
         <ListBox x:Name="proprieties" HorizontalAlignment="Left" Height="291" Margin="568,60,0,0" VerticalAlignment="Top" Width="216"/>
         <Button Content="Convert XML to Json" HorizontalAlignment="Left" Margin="10,356,0,0" VerticalAlignment="Top" Width="199" Height="88" FontSize="20" Click="Convert" Drop="Button_Drop" AllowDrop="True"/>
         <Button Content="Open Extracted files" HorizontalAlignment="Left" Margin="568,10,0,0" VerticalAlignment="Top" Width="216" Height="45" FontSize="20" Click="OpenExtractedFiles"/>
+        <TextBox x:Name="SearchBar" HorizontalAlignment="Left" Height="23" Margin="66,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="492" ToolTip="" TextChanged="SearchChanged"/>
+        <Label Content="Search:" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="51" Height="23"/>
     </Grid>
 </Window>

@@ -5,7 +5,6 @@ C:\Users\caten\DJHCP\DJHCP\bin\Release\INIFileParser.dll
 C:\Users\caten\DJHCP\DJHCP\bin\Release\Newtonsoft.Json.dll
 C:\Users\caten\DJHCP\DJHCP\bin\Release\INIFileParser.xml
 C:\Users\caten\DJHCP\DJHCP\bin\Release\Newtonsoft.Json.xml
-C:\Users\caten\DJHCP\DJHCP\obj\Release\DJHCP.csprojAssemblyReference.cache
 C:\Users\caten\DJHCP\DJHCP\obj\Release\MainWindow.g.cs
 C:\Users\caten\DJHCP\DJHCP\obj\Release\App.g.cs
 C:\Users\caten\DJHCP\DJHCP\obj\Release\DJHCP_MarkupCompile.cache
@@ -17,3 +16,6 @@ C:\Users\caten\DJHCP\DJHCP\obj\Release\DJHCP.csproj.GenerateResource.cache
 C:\Users\caten\DJHCP\DJHCP\obj\Release\DJHCP.csproj.CopyComplete
 C:\Users\caten\DJHCP\DJHCP\obj\Release\DJHCP.exe
 C:\Users\caten\DJHCP\DJHCP\obj\Release\DJHCP.pdb
+C:\Users\caten\DJHCP\DJHCP\bin\Release\BetterFolderBrowser.dll
+C:\Users\caten\DJHCP\DJHCP\bin\Release\BetterFolderBrowser.xml
+C:\Users\caten\DJHCP\DJHCP\obj\Release\DJHCP.csprojAssemblyReference.cache

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Xml;
 using System.IO;
 using Newtonsoft.Json;
+using WK.Libraries.BetterFolderBrowserNS;
 
 namespace DJHCP
 {
@@ -85,15 +86,33 @@ namespace DJHCP
 
     public partial class MainWindow : Window
     {
-        public static List<XmlNode> nodes = new List<XmlNode>();
+        public static List<XmlNode> totalNodes = new List<XmlNode>();
+        public static List<XmlNode> visibleNodes = new List<XmlNode>();
         public static List<XmlNode> removedNodes = new List<XmlNode>();
         public string baseFolder = string.Empty;
         public List<string> textFiles = new List<string>();
         public Dictionary<string, string> tracStrings = new Dictionary<string, string>();
+        public bool edited = false;
 
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void updateList()
+        {
+            TrackListing.ItemsSource = null;
+            visibleNodes.Clear();
+
+            foreach (XmlNode x in totalNodes)
+            {
+                string id = x.SelectSingleNode("IDTag").InnerText;
+                if (id.ToLower().Contains(SearchBar.Text.ToLower()))
+                {
+                    visibleNodes.Add(x);
+                }
+            }
+            TrackListing.ItemsSource = visibleNodes;
         }
 
         private void saveRemoved()
@@ -131,10 +150,24 @@ namespace DJHCP
                 XmlNode node = list.Item(i);
                 if (node.Name == "Track")
                 {
-                    nodes.Add(node);
+                    bool present = false;
+                    foreach (XmlNode x in totalNodes)
+                    {
+                        string customId = node.SelectSingleNode("IDTag").InnerText;
+                        if (x.SelectSingleNode("IDTag").InnerText == customId)
+                        {
+                            present = true;
+                            string message = "A song with the id " + customId + " is already present. Skipping entry";
+                            System.Windows.MessageBox.Show(message,"message");
+                        }
+                    }
+                    if (!present)
+                    {
+                        totalNodes.Add(node);
+                    }
                 }
             }
-            TrackListing.ItemsSource = nodes;
+            updateList();
         }
 
         private void LoadJson(string path)
@@ -188,8 +221,8 @@ namespace DJHCP
                 XmlNode node = document.DocumentElement;
 
                 TrackListing.ItemsSource = null;
-                nodes.Add(node);
-                TrackListing.ItemsSource = nodes;
+                totalNodes.Add(node);
+                updateList();
                 System.Windows.MessageBox.Show("Successfully added song to list", "Successfully added song to list");
             }
             catch (System.Xml.XmlException error)
@@ -208,6 +241,7 @@ namespace DJHCP
         private void AddCustom(object sender, RoutedEventArgs e)
         {
             OpenFileDialog dialog = new OpenFileDialog();
+            dialog.Title = "Open 'info for tracklisting.xml'";
             if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 XmlDocument xml = new XmlDocument();
@@ -247,15 +281,32 @@ namespace DJHCP
                     foreach (FileInfo f in data)
                     {
                         string destinationPath = baseFolder + @"\AUDIO\Audiotracks\" + dirName + "\\" + f.Name;
-                        System.Windows.MessageBox.Show(destinationPath);
                         System.IO.File.Copy(f.FullName, destinationPath);
                     }
 
                 }
+                catch (XmlException error)
+                {
+                    string message = "ERROR: cannot load xml file.\nMake sure the file you selected is a valid song info file\n";
+                    message += error.Message;
+                    System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                catch (PathTooLongException error)
+                {
+                    string message = "ERROR: Selected Path is too long.\n";
+                    message += error.Message;
+                    System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                catch (IOException error)
+                {
+                    string message = "ERROR: Cannot open/read selected file.\n";
+                    message += error.Message;
+                    System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
                 catch
                 {
-                    System.Windows.MessageBox.Show("Cannot read file.\nMake sure the folder is a valid custom folder",
-                        "Parsing error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    string message = "Error: Unknown error";
+                    System.Windows.MessageBox.Show(message, "Parsing error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
 
@@ -265,7 +316,7 @@ namespace DJHCP
             if (TrackListing.SelectedIndex != -1)
             {
                 proprieties.Items.Clear();
-                XmlNode selected = nodes[TrackListing.SelectedIndex];
+                XmlNode selected = totalNodes[TrackListing.SelectedIndex];
                 if (selected.SelectNodes("MixArtist").Count > 0)
                 {
                     string id = selected.SelectNodes("MixArtist")[0].InnerText;
@@ -448,7 +499,7 @@ namespace DJHCP
                 string path = baseFolder + @"\AUDIO\Audiotracks\tracklisting.xml";
                 string s = string.Empty;
                 s += "<TrackList>";
-                foreach (XmlNode n in nodes)
+                foreach (XmlNode n in totalNodes)
                 {
                     s += "<Track ";
                     foreach (XmlAttribute attribute in n.Attributes)
@@ -489,6 +540,7 @@ namespace DJHCP
                 File.WriteAllText(path + "TRACID.txt", s);
 
                 System.Windows.MessageBox.Show("Done updating files", "Finished");
+                edited = false;
             }
         }
 
@@ -544,10 +596,28 @@ namespace DJHCP
                 }
 
             }
-            catch (System.Xml.XmlException)
+            catch (XmlException error)
             {
-                System.Windows.MessageBox.Show("Cannot read file as Xml.\nMake sure the file is a valid Xml file",
-                    "Xml error", MessageBoxButton.OK, MessageBoxImage.Error);
+                string message = "ERROR: cannot load xml file.\nMake sure the file you selected is a valid song info file\n";
+                message += error.Message;
+                System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (PathTooLongException error)
+            {
+                string message = "ERROR: Selected Path is too long.\n";
+                message += error.Message;
+                System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (IOException error)
+            {
+                string message = "ERROR: Cannot open/read selected file.\n";
+                message += error.Message;
+                System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch
+            {
+                string message = "Error: Unhandled Exception";
+                System.Windows.MessageBox.Show(message, "Parsing error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -594,12 +664,30 @@ namespace DJHCP
                     string destinationPath = baseFolder + @"\AUDIO\Audiotracks\" + dirName + "\\" + f.Name;
                     System.IO.File.Copy(f.FullName, destinationPath);
                 }
-
+                edited = true;
+            }
+            catch (XmlException error)
+            {
+                string message = "ERROR: cannot load xml file.\nMake sure the file you selected is a valid song info file\n";
+                message += error.Message;
+                System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (PathTooLongException error)
+            {
+                string message = "ERROR: Selected Path is too long.\n";
+                message += error.Message;
+                System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (IOException error)
+            {
+                string message = "ERROR: Cannot open/read selected file.\n";
+                message += error.Message;
+                System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             catch
             {
-                System.Windows.MessageBox.Show("Cannot read file.\nMake sure the folder is a valid custom folder",
-                    "Parsing error", MessageBoxButton.OK, MessageBoxImage.Error);
+                string message = "Error: Unhandled Exception";
+                System.Windows.MessageBox.Show(message, "Parsing error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -617,10 +705,11 @@ namespace DJHCP
                     {
                         int index = TrackListing.Items.IndexOf(arrayList[i]);
                         TrackListing.ItemsSource = null;
-                        XmlNode removed = nodes[index];
-                        nodes.RemoveAt(index);
+                        XmlNode removed = totalNodes[index];
+                        totalNodes.RemoveAt(index);
                         removedNodes.Add(removed);
-                        TrackListing.ItemsSource = nodes;
+                        updateList();
+
                     }
                 }
             }
@@ -629,23 +718,32 @@ namespace DJHCP
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             saveRemoved();
+            if (edited)
+            {
+                string text = "You have changes not applied to the files.\nDo you really want to close?";
+                if (System.Windows.MessageBox.Show(text, "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning)
+                    == MessageBoxResult.No)
+                {
+                    e.Cancel = true;
+                }
+            }
         }
 
         private void OpenExtractedFiles(object sender, RoutedEventArgs e)
         {
-            FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog();
-            folderBrowserDialog.Description = "Open the WII/PS3/X360 folder";
-            if (folderBrowserDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            BetterFolderBrowser folderSelect = new BetterFolderBrowser();
+            folderSelect.Title = "Open the WII/PS3/X360 folder";
+            if (folderSelect.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                baseFolder = folderBrowserDialog.SelectedPath;
-                string tracklistingPath = folderBrowserDialog.SelectedPath + @"\AUDIO\Audiotracks\tracklisting.xml";
+                string tracklistingPath = folderSelect.SelectedPath + @"\AUDIO\Audiotracks\tracklisting.xml";
                 XmlDocument document = new XmlDocument();
                 try
                 {
                     document.Load(tracklistingPath);
                     LoadXml(document.DocumentElement);
+                    baseFolder = folderSelect.SelectedPath;
 
-                    string trackStringFolderPath = folderBrowserDialog.SelectedPath + @"\Text\TRAC";
+                    string trackStringFolderPath = folderSelect.SelectedPath + @"\Text\TRAC";
 
                     DirectoryInfo info = new DirectoryInfo(trackStringFolderPath);
 
@@ -671,13 +769,37 @@ namespace DJHCP
                             tracStrings.Add(ids[i], values[i]);
                         }
                     }
+                    edited = true;
+                }
+                catch (XmlException error)
+                {
+                    string message = "ERROR: cannot load xml file.\nMake sure the file you selected is a valid song info file\n";
+                    message += error.Message;
+                    System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                catch (PathTooLongException error)
+                {
+                    string message = "ERROR: Selected Path is too long.\n";
+                    message += error.Message;
+                    System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                catch (IOException error)
+                {
+                    string message = "ERROR: Cannot open/read selected file.\n";
+                    message += error.Message;
+                    System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
                 catch
                 {
-                    string message = "ERROR: could not load extracted files.\nCheck if the files are present in the directory";
+                    string message = "ERROR: Unhandled Exception";
                     System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
+        }
+
+        private void SearchChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            updateList();
         }
     }
 }

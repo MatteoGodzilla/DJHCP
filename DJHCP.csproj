@@ -35,6 +35,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="BetterFolderBrowser, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\BetterFolderBrowser.1.0.0\lib\BetterFolderBrowser.dll</HintPath>
+    </Reference>
     <Reference Include="INIFileParser, Version=2.5.2.0, Culture=neutral, PublicKeyToken=79af7b307b65cf3c, processorArchitecture=MSIL">
       <HintPath>packages\ini-parser.2.5.2\lib\net20\INIFileParser.dll</HintPath>
     </Reference>
