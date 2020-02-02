@@ -19,3 +19,6 @@ C:\Users\caten\DJHCP\DJHCP\obj\Release\DJHCP.pdb
 C:\Users\caten\DJHCP\DJHCP\bin\Release\BetterFolderBrowser.dll
 C:\Users\caten\DJHCP\DJHCP\bin\Release\BetterFolderBrowser.xml
 C:\Users\caten\DJHCP\DJHCP\obj\Release\DJHCP.csprojAssemblyReference.cache
+C:\Users\caten\DJHCP\DJHCP\bin\Release\WpfPlus.dll
+C:\Users\caten\DJHCP\DJHCP\obj\Release\tracStringWindow.g.cs
+C:\Users\caten\DJHCP\DJHCP\obj\Release\tracStringWindow.baml

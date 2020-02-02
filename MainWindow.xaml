@@ -5,22 +5,30 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DJHCP"
         mc:Ignorable="d"
-        ResizeMode="CanMinimize"
-        Title="DJHCP" Height="500" Width="800" Background="White" Closing="Window_Closing">
+        Title="DJHCP" Height="500" Width="800" Closing="Window_Closing" ResizeMode="CanResizeWithGrip">
     <Grid>
-        <Button x:Name="Button" Content="Add Custom" HorizontalAlignment="Left" Margin="214,356,0,0" VerticalAlignment="Top" Width="344" Height="88" Click="AddCustom" FontSize="20" IsDefault="True" AllowDrop="True" Drop="AddCustomButtonDrop"/>
-        <DataGrid x:Name="TrackListing" HorizontalAlignment="Left" Height="313" Margin="10,38,0,0" VerticalAlignment="Top" Width="548" 
-                    IsSynchronizedWithCurrentItem="False" AutoGenerateColumns="False" CanUserAddRows="False" CanUserReorderColumns="True" SelectionChanged="TrackListing_SelectionChanged" KeyUp="Tracklisting_confirmRemove" CanUserDeleteRows="False">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="107*"/>
+            <ColumnDefinition Width="177*"/>
+            <ColumnDefinition Width="113*"/>
+        </Grid.ColumnDefinitions>
+        <Button x:Name="Button" Content="Add Custom" Margin="6,0,4,27" Click="AddCustom" FontSize="20" IsDefault="True" AllowDrop="True" Drop="AddCustomButtonDrop" Height="88" VerticalAlignment="Bottom" Grid.Column="1"/>
+        <DataGrid x:Name="TrackListing" Margin="10,70,4,120" 
+                    IsSynchronizedWithCurrentItem="False" AutoGenerateColumns="False" CanUserAddRows="False" CanUserReorderColumns="True" SelectionChanged="TrackListing_SelectionChanged" KeyUp="Tracklisting_confirmRemove" CanUserDeleteRows="False" Grid.ColumnSpan="2">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Id" Binding="{Binding XPath=IDTag}"/>
                 <DataGridTextColumn Header="Folder location" Binding="{Binding XPath=FolderLocation}"/>
             </DataGrid.Columns>
         </DataGrid>
-        <Button Content="Update File" HorizontalAlignment="Left" Margin="568,356,0,0" VerticalAlignment="Top" Width="216" Height="88" FontSize="20" Click="UpdateFile"/>
-        <ListBox x:Name="proprieties" HorizontalAlignment="Left" Height="291" Margin="568,60,0,0" VerticalAlignment="Top" Width="216"/>
-        <Button Content="Convert XML to Json" HorizontalAlignment="Left" Margin="10,356,0,0" VerticalAlignment="Top" Width="199" Height="88" FontSize="20" Click="Convert" Drop="Button_Drop" AllowDrop="True"/>
-        <Button Content="Open Extracted files" HorizontalAlignment="Left" Margin="568,10,0,0" VerticalAlignment="Top" Width="216" Height="45" FontSize="20" Click="OpenExtractedFiles"/>
-        <TextBox x:Name="SearchBar" HorizontalAlignment="Left" Height="23" Margin="66,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="492" ToolTip="" TextChanged="SearchChanged"/>
-        <Label Content="Search:" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="51" Height="23"/>
+        <Button Content="Update File" Margin="6,0,10,27" FontSize="20" Click="UpdateFile" Grid.Column="2" Height="88" VerticalAlignment="Bottom"/>
+        <ListBox x:Name="proprieties" Margin="6,101,10,120" Grid.Column="2"/>
+        <Button Content="Open Extracted files" Margin="6,10,10,0" FontSize="20" Click="OpenExtractedFiles" Grid.Column="2" Height="55" VerticalAlignment="Top"/>
+        <TextBox x:Name="SearchBar" Margin="66,41,4,0" TextWrapping="Wrap" ToolTip="" TextChanged="SearchChanged" Height="23" VerticalAlignment="Top" Grid.ColumnSpan="2"/>
+        <Label Content="Search:" Margin="10,42,0,0" HorizontalAlignment="Left" Width="57" Height="23" VerticalAlignment="Top"/>
+        <Label Content="" HorizontalAlignment="Left" Margin="6,60,0,0" VerticalAlignment="Top" Grid.Column="2" Height="26" Width="10"/>
+        <Label Content="Additional Song Information" Margin="6,70,10,0" HorizontalContentAlignment="Center" Grid.Column="2" Height="26" VerticalAlignment="Top"/>
+        <Label Content="Base Folder Path:" Margin="10,10,0,0" Height="26" VerticalAlignment="Top" HorizontalAlignment="Left" Width="110"/>
+        <Label x:Name="baseFolderLabel" Content="&#xD;&#xA;" Margin="119,10,4,0" Grid.ColumnSpan="2" Height="26" VerticalAlignment="Top"/>
+        <Button x:Name="EditTrackData" Content="Edit TRAC.csv data" Margin="11,0,0,27" FontSize="20" Click="EditTrackData_Click" Height="88" VerticalAlignment="Bottom"/>
     </Grid>
 </Window>

@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Forms;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Xml;
 using System.IO;
 using Newtonsoft.Json;
@@ -88,33 +89,101 @@ namespace DJHCP
     {
         public static List<XmlNode> totalNodes = new List<XmlNode>();
         public static List<XmlNode> visibleNodes = new List<XmlNode>();
-        public static List<XmlNode> removedNodes = new List<XmlNode>();
         public string baseFolder = string.Empty;
         public List<string> textFiles = new List<string>();
         public Dictionary<string, string> tracStrings = new Dictionary<string, string>();
         public bool edited = false;
+
+        
 
         public MainWindow()
         {
             InitializeComponent();
         }
 
-        private void updateList()
+        private int compareIds(XmlNode one, XmlNode two)
         {
-            TrackListing.ItemsSource = null;
-            visibleNodes.Clear();
-
-            foreach (XmlNode x in totalNodes)
+            try
             {
-                string id = x.SelectSingleNode("IDTag").InnerText;
-                if (id.ToLower().Contains(SearchBar.Text.ToLower()))
-                {
-                    visibleNodes.Add(x);
-                }
+                string oneId = one.SelectSingleNode("IDTag").InnerText;
+                string twoId = two.SelectSingleNode("IDTag").InnerText;
+                return oneId.CompareTo(twoId);
             }
-            TrackListing.ItemsSource = visibleNodes;
+            catch
+            {
+                return 0;
+            }
         }
 
+        private void updateList()
+        {
+            try
+            {
+                TrackListing.ItemsSource = null;
+                visibleNodes.Clear();
+                proprieties.Items.Clear();
+
+                totalNodes.Sort(compareIds);
+
+                List<string> textKeysFound = new List<string>();
+                List<string> textNameFound = new List<string>();
+
+                foreach (var name in tracStrings.Values)
+                {
+                    if (name.ToLower().Contains(SearchBar.Text.ToLower()))
+                    {
+                        textNameFound.Add(name);
+                    }
+                }
+
+                foreach (var key in tracStrings.Keys)
+                {
+                    foreach (string name in textNameFound)
+                    {
+                        if (tracStrings[key] == name && !textKeysFound.Contains(key))
+                        {
+                            textKeysFound.Add(key);
+                        }
+                    }
+                }
+
+                foreach (XmlNode x in totalNodes)
+                {
+                    string id = x.SelectSingleNode("IDTag").InnerText;
+                    if (id.ToLower().Contains(SearchBar.Text.ToLower()) && !visibleNodes.Contains(x))
+                    {
+                        visibleNodes.Add(x);
+                    }
+
+                    XmlNodeList nameList = x.SelectNodes("MixName");
+
+                    foreach (XmlNode name in nameList)
+                    {
+                        foreach (string tag in textKeysFound)
+                        {
+                            if (name.InnerText == tag && !visibleNodes.Contains(x)) visibleNodes.Add(x);
+                        }
+                    }
+
+                    XmlNodeList artistList = x.SelectNodes("MixArtist");
+
+                    foreach (XmlNode artist in artistList)
+                    {
+                        foreach (string tag in textKeysFound)
+                        {
+                            if (artist.InnerText == tag && !visibleNodes.Contains(x)) visibleNodes.Add(x);
+                        }
+                    }
+                }
+                TrackListing.ItemsSource = visibleNodes;
+            }
+            catch
+            {
+                System.Windows.MessageBox.Show("Error updating list");
+            }
+        }
+
+        /*
         private void saveRemoved()
         {
             if (removedNodes.Count > 0)
@@ -138,36 +207,44 @@ namespace DJHCP
                 t += "</TrackList>";
                 File.WriteAllText("removedTracks.xml", t);
             }
-
         }
+        */
 
         private void LoadXml(XmlNode root)
         {
-            TrackListing.ItemsSource = null;
-            XmlNodeList list = root.ChildNodes;
-            for (int i = 0; i < list.Count; ++i)
+            try
             {
-                XmlNode node = list.Item(i);
-                if (node.Name == "Track")
+                TrackListing.ItemsSource = null;
+                XmlNodeList list = root.ChildNodes;
+                for (int i = 0; i < list.Count; ++i)
                 {
-                    bool present = false;
-                    foreach (XmlNode x in totalNodes)
+                    XmlNode node = list.Item(i);
+                    if (node.Name == "Track")
                     {
-                        string customId = node.SelectSingleNode("IDTag").InnerText;
-                        if (x.SelectSingleNode("IDTag").InnerText == customId)
+                        bool present = false;
+                        foreach (XmlNode x in totalNodes)
                         {
-                            present = true;
-                            string message = "A song with the id " + customId + " is already present. Skipping entry";
-                            System.Windows.MessageBox.Show(message,"message");
+                            string customId = node.SelectSingleNode("IDTag").InnerText;
+                            if (x.SelectSingleNode("IDTag").InnerText == customId)
+                            {
+                                present = true;
+                                string message = "A song with the id " + customId + " is already present. Skipping entry";
+                                System.Windows.MessageBox.Show(message, "message");
+                            }
+                        }
+                        if (!present)
+                        {
+                            totalNodes.Add(node);
                         }
                     }
-                    if (!present)
-                    {
-                        totalNodes.Add(node);
-                    }
                 }
+                updateList();
             }
-            updateList();
+            catch (System.Xml.XPath.XPathException exception)
+            {
+                System.Windows.MessageBox.Show(exception.Message); 
+            }
+            
         }
 
         private void LoadJson(string path)
@@ -299,9 +376,9 @@ namespace DJHCP
                 }
                 catch (IOException error)
                 {
-                    string message = "ERROR: Cannot open/read selected file.\n";
+                    string message = "Warning: custom's files already present in base folder. Skipping\n";
                     message += error.Message;
-                    System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
                 catch
                 {
@@ -316,7 +393,7 @@ namespace DJHCP
             if (TrackListing.SelectedIndex != -1)
             {
                 proprieties.Items.Clear();
-                XmlNode selected = totalNodes[TrackListing.SelectedIndex];
+                XmlNode selected = visibleNodes[TrackListing.SelectedIndex];
                 if (selected.SelectNodes("MixArtist").Count > 0)
                 {
                     string id = selected.SelectNodes("MixArtist")[0].InnerText;
@@ -493,57 +570,67 @@ namespace DJHCP
 
         private void UpdateFile(object sender, RoutedEventArgs e)
         {
-            if (baseFolder != string.Empty)
+            try
             {
-
-                string path = baseFolder + @"\AUDIO\Audiotracks\tracklisting.xml";
-                string s = string.Empty;
-                s += "<TrackList>";
-                foreach (XmlNode n in totalNodes)
+                if (baseFolder != string.Empty)
                 {
-                    s += "<Track ";
-                    foreach (XmlAttribute attribute in n.Attributes)
+
+                    string path = baseFolder + @"\AUDIO\Audiotracks\tracklisting.xml";
+                    string s = string.Empty;
+                    s += "<TrackList>";
+                    foreach (XmlNode n in totalNodes)
                     {
-                        s += attribute.Name;
-                        s += "=\"";
-                        s += attribute.Value;
-                        s += "\" ";
+                        s += "<Track ";
+                        foreach (XmlAttribute attribute in n.Attributes)
+                        {
+                            s += attribute.Name;
+                            s += "=\"";
+                            s += attribute.Value;
+                            s += "\" ";
+                        }
+                        s += ">";
+                        s += n.InnerXml;
+                        s += "</Track>";
                     }
-                    s += ">";
-                    s += n.InnerXml;
-                    s += "</Track>";
+                    s += "</TrackList>";
+                    File.WriteAllText(path, s);
+
+                    //saveRemoved();
+
+                    path = baseFolder + @"\Text\TRAC\";
+                    s = string.Empty;
+                    List<string> valueList = new List<string>(tracStrings.Values);
+                    for (int i = 0; i < tracStrings.Count; ++i)
+                    {
+                        s += valueList[i] + "\0";
+                    }
+
+                    foreach (string p in textFiles)
+                    {
+                        File.WriteAllText(p, s);
+                    }
+
+                    s = string.Empty;
+                    List<string> keysList = new List<string>(tracStrings.Keys);
+                    for (int i = 0; i < tracStrings.Count; ++i)
+                    {
+                        s += keysList[i] + "\r\n";
+                    }
+                    File.WriteAllText(path + "TRACID.txt", s);
+
+                    System.Windows.MessageBox.Show("Done updating files", "Finished");
+                    edited = false;
                 }
-                s += "</TrackList>";
-                File.WriteAllText(path, s);
-
-                saveRemoved();
-
-                path = baseFolder + @"\Text\TRAC\";
-                s = string.Empty;
-                List<string> valueList = new List<string>(tracStrings.Values);
-                for (int i = 0; i < tracStrings.Count; ++i)
-                {
-                    s += valueList[i] + "\0";
-                }
-
-                foreach (string p in textFiles)
-                {
-                    File.WriteAllText(p, s);
-                }
-
-                s = string.Empty;
-                List<string> keysList = new List<string>(tracStrings.Keys);
-                for (int i = 0; i < tracStrings.Count; ++i)
-                {
-                    s += keysList[i] + "\r\n";
-                }
-                File.WriteAllText(path + "TRACID.txt", s);
-
-                System.Windows.MessageBox.Show("Done updating files", "Finished");
-                edited = false;
             }
+            catch
+            {
+                string message = "Error: could not update files";
+                System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            
         }
 
+        /*
         private void Convert(object sender, RoutedEventArgs e)
         {
             OpenFileDialog dialog = new OpenFileDialog();
@@ -616,10 +703,11 @@ namespace DJHCP
             }
             catch
             {
-                string message = "Error: Unhandled Exception";
+                string message = "Error: Unhandled Exception when loading custom";
                 System.Windows.MessageBox.Show(message, "Parsing error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+        */
 
         private void AddCustomButtonDrop(object sender, System.Windows.DragEventArgs e)
         {
@@ -665,6 +753,8 @@ namespace DJHCP
                     System.IO.File.Copy(f.FullName, destinationPath);
                 }
                 edited = true;
+
+                System.Windows.MessageBox.Show("Successfully copied files into game", "Copied successfully");
             }
             catch (XmlException error)
             {
@@ -680,13 +770,13 @@ namespace DJHCP
             }
             catch (IOException error)
             {
-                string message = "ERROR: Cannot open/read selected file.\n";
+                string message = "Warning: custom's files already present in base folder. Skipping\n";
                 message += error.Message;
-                System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
             catch
             {
-                string message = "Error: Unhandled Exception";
+                string message = "Error: Unhandled Exception when adding custom";
                 System.Windows.MessageBox.Show(message, "Parsing error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -707,7 +797,7 @@ namespace DJHCP
                         TrackListing.ItemsSource = null;
                         XmlNode removed = totalNodes[index];
                         totalNodes.RemoveAt(index);
-                        removedNodes.Add(removed);
+                        
                         updateList();
 
                     }
@@ -717,7 +807,7 @@ namespace DJHCP
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            saveRemoved();
+            //saveRemoved();
             if (edited)
             {
                 string text = "You have changes not applied to the files.\nDo you really want to close?";
@@ -742,6 +832,7 @@ namespace DJHCP
                     document.Load(tracklistingPath);
                     LoadXml(document.DocumentElement);
                     baseFolder = folderSelect.SelectedPath;
+                    baseFolderLabel.Content = baseFolder;
 
                     string trackStringFolderPath = folderSelect.SelectedPath + @"\Text\TRAC";
 
@@ -791,7 +882,7 @@ namespace DJHCP
                 }
                 catch
                 {
-                    string message = "ERROR: Unhandled Exception";
+                    string message = "ERROR: Unhandled Exception when opening extracted files";
                     System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
@@ -799,6 +890,26 @@ namespace DJHCP
 
         private void SearchChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
         {
+            updateList();
+        }
+
+        private void EditTrackData_Click(object sender, RoutedEventArgs e)
+        {
+            tracStringWindow window = new tracStringWindow(tracStrings);
+            window.Owner = this;
+
+            window.EditedTracStrings += ReceivedData;
+            window.ShowDialog();
+        }
+
+        private void ReceivedData(object obj, List<Entry> entries)
+        {
+            TrackListing.ItemsSource = null;
+            tracStrings.Clear();
+            foreach(var entry in entries)
+            {
+                tracStrings.Add(entry.m_id, entry.m_value);
+            }
             updateList();
         }
     }
