@@ -1,18 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace DJHCP
 {
@@ -62,6 +51,7 @@ namespace DJHCP
         public event EditedTracStringsHandler EditedTracStrings;
 
         public List<Entry> data = new List<Entry>();
+        public List<Entry> visibleEntries;
         public tracStringWindow(Dictionary<string,string> list)
         {
             InitializeComponent();
@@ -69,12 +59,31 @@ namespace DJHCP
             {
                 data.Add(new Entry(key, list[key]));
             }
-            Grid.ItemsSource = data;
-            
+            visibleEntries = new List<Entry>(data);
+            Grid.ItemsSource = visibleEntries;
         }
         private void DialogClosing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             EditedTracStrings?.Invoke(this, data);
+        }
+
+        private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            Grid.ItemsSource = null;
+            visibleEntries.Clear();
+
+            foreach(var entry in data)
+            {
+                if (entry.m_id.ToUpper().Contains(SearchBox.Text.ToUpper()))
+                {
+                    visibleEntries.Add(entry);
+                }
+                else if (entry.m_value.ToUpper().Contains(SearchBox.Text.ToUpper()))
+                {
+                    visibleEntries.Add(entry);
+                }
+            }
+            Grid.ItemsSource = visibleEntries;
         }
     }
 }

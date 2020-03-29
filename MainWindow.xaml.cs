@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Forms;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Collections.ObjectModel;
 using System.Xml;
 using System.IO;
@@ -94,13 +95,24 @@ namespace DJHCP
         public Dictionary<string, string> tracStrings = new Dictionary<string, string>();
         public bool edited = false;
 
-        
-
         public MainWindow()
         {
             InitializeComponent();
+            initialLoad();
         }
 
+        private void initialLoad()
+        {
+            try
+            {
+                baseFolder = System.IO.File.ReadAllText("config.txt");
+                if(baseFolder != string.Empty)
+                {
+                    LoadExtractedFromPath(baseFolder);
+                }
+            }
+            catch{}
+        }
         private int compareIds(XmlNode one, XmlNode two)
         {
             try
@@ -183,33 +195,6 @@ namespace DJHCP
             }
         }
 
-        /*
-        private void saveRemoved()
-        {
-            if (removedNodes.Count > 0)
-            {
-                string t = string.Empty;
-                t += "<TrackList>";
-                foreach (XmlNode n in removedNodes)
-                {
-                    t += "<Track ";
-                    foreach (XmlAttribute attribute in n.Attributes)
-                    {
-                        t += attribute.Name;
-                        t += "=\"";
-                        t += attribute.Value;
-                        t += "\" ";
-                    }
-                    t += ">";
-                    t += n.InnerXml;
-                    t += "</Track>";
-                }
-                t += "</TrackList>";
-                File.WriteAllText("removedTracks.xml", t);
-            }
-        }
-        */
-
         private void LoadXml(XmlNode root)
         {
             try
@@ -242,9 +227,9 @@ namespace DJHCP
             }
             catch (System.Xml.XPath.XPathException exception)
             {
-                System.Windows.MessageBox.Show(exception.Message); 
+                System.Windows.MessageBox.Show(exception.Message);
             }
-            
+
         }
 
         private void LoadJson(string path)
@@ -327,22 +312,6 @@ namespace DJHCP
                     xml.Load(dialog.FileName);
                     LoadXml(xml.DocumentElement);
 
-                    string namesPath = dialog.FileName + @"\..\info for trac.csv";
-                    StreamReader reader = new StreamReader(namesPath);
-
-                    string line = string.Empty;
-                    while ((line = reader.ReadLine()) != null)
-                    {
-                        if (line.Contains("//")) continue;
-                        if (string.IsNullOrEmpty(line)) continue;
-                        string[] content;
-                        content = line.Split(',');
-                        if (!tracStrings.ContainsKey(content[0]))
-                        {
-                            tracStrings.Add(content[0], content[1]);
-                        }
-                    }
-
                     string dir = new List<string>(Directory.EnumerateDirectories(dialog.FileName + @"\..\"))[0];
 
                     List<string> tree = new List<string>(dir.Split('\\'));
@@ -384,6 +353,31 @@ namespace DJHCP
                 {
                     string message = "Error: Unknown error";
                     System.Windows.MessageBox.Show(message, "Parsing error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+
+                try
+                {
+                    string namesPath = dialog.FileName + @"\..\info for trac.csv";
+                    StreamReader reader = new StreamReader(namesPath);
+
+                    string line = string.Empty;
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        if (line.Contains("//")) continue;
+                        if (string.IsNullOrEmpty(line)) continue;
+                        string[] content;
+                        content = line.Split(',');
+                        if (!tracStrings.ContainsKey(content[0]))
+                        {
+                            tracStrings.Add(content[0], content[1]);
+                        }
+                    }
+                }
+                catch (IOException error)
+                {
+                    string message = "Warning: \"info for trac.csv\" file not found\n";
+                    message += error.Message;
+                    System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
 
@@ -627,7 +621,7 @@ namespace DJHCP
                 string message = "Error: could not update files";
                 System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            
+
         }
 
         /*
@@ -719,22 +713,6 @@ namespace DJHCP
                 xml.Load(paths[0]);
                 LoadXml(xml.DocumentElement);
 
-                string namesPath = paths[0] + @"\..\info for trac.csv";
-                StreamReader reader = new StreamReader(namesPath);
-
-                string line = string.Empty;
-                while ((line = reader.ReadLine()) != null)
-                {
-                    if (line.Contains("//")) continue;
-                    if (string.IsNullOrEmpty(line)) continue;
-                    string[] content;
-                    content = line.Split(',');
-                    if (!tracStrings.ContainsKey(content[0]))
-                    {
-                        tracStrings.Add(content[0], content[1]);
-                    }
-                }
-
                 string dir = new List<string>(Directory.EnumerateDirectories(paths[0] + @"\..\"))[0];
 
                 List<string> tree = new List<string>(dir.Split('\\'));
@@ -753,8 +731,6 @@ namespace DJHCP
                     System.IO.File.Copy(f.FullName, destinationPath);
                 }
                 edited = true;
-
-                System.Windows.MessageBox.Show("Successfully copied files into game", "Copied successfully");
             }
             catch (XmlException error)
             {
@@ -779,6 +755,30 @@ namespace DJHCP
                 string message = "Error: Unhandled Exception when adding custom";
                 System.Windows.MessageBox.Show(message, "Parsing error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+            try
+            {
+                string namesPath = paths[0] + @"\..\info for trac.csv";
+                StreamReader reader = new StreamReader(namesPath);
+                string line = string.Empty;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    if (line.Contains("//")) continue;
+                    if (string.IsNullOrEmpty(line)) continue;
+                    string[] content;
+                    content = line.Split(',');
+                    if (!tracStrings.ContainsKey(content[0]))
+                    {
+                        tracStrings.Add(content[0], content[1]);
+                    }
+                }
+                System.Windows.MessageBox.Show("Successfully copied files into game", "Copied successfully");
+            }
+            catch (IOException error)
+            {
+                string message = "Warning: \"info for trac.csv\" file not found\n";
+                message += error.Message;
+                System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
         }
 
         private void Tracklisting_confirmRemove(object sender, System.Windows.Input.KeyEventArgs e)
@@ -797,11 +797,20 @@ namespace DJHCP
                         TrackListing.ItemsSource = null;
                         XmlNode removed = totalNodes[index];
                         totalNodes.RemoveAt(index);
-                        
+
                         updateList();
 
                     }
                 }
+            }
+            else if (e.Key == System.Windows.Input.Key.Space)
+            {
+                XmlNode entry = visibleNodes[TrackListing.Items.IndexOf(TrackListing.SelectedItem)];
+                string path = baseFolder + "\\" + entry.SelectSingleNode("FolderLocation").InnerText;
+                ProcessStartInfo processStartInfo = new ProcessStartInfo();
+                processStartInfo.FileName = "explorer.exe";
+                processStartInfo.Arguments = path;
+                Process.Start(processStartInfo);
             }
         }
 
@@ -819,72 +828,79 @@ namespace DJHCP
             }
         }
 
-        private void OpenExtractedFiles(object sender, RoutedEventArgs e)
+        private void OpenExtractedFilesButtonClick(object sender, RoutedEventArgs e)
         {
             BetterFolderBrowser folderSelect = new BetterFolderBrowser();
             folderSelect.Title = "Open the WII/PS3/X360 folder";
             if (folderSelect.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                string tracklistingPath = folderSelect.SelectedPath + @"\AUDIO\Audiotracks\tracklisting.xml";
-                XmlDocument document = new XmlDocument();
-                try
+                LoadExtractedFromPath(folderSelect.SelectedFolder);
+            }
+        }
+
+        private void LoadExtractedFromPath(string path)
+        {
+            string tracklistingPath = path + @"\AUDIO\Audiotracks\tracklisting.xml";
+            XmlDocument document = new XmlDocument();
+            try
+            {
+                document.Load(tracklistingPath);
+                LoadXml(document.DocumentElement);
+                baseFolder = path;
+                System.IO.File.WriteAllText("config.txt", baseFolder);
+
+                baseFolderLabel.Content = baseFolder;
+
+                string trackStringFolderPath = path + @"\Text\TRAC";
+
+                DirectoryInfo info = new DirectoryInfo(trackStringFolderPath);
+
+                FileInfo[] files = info.GetFiles();
+                foreach (FileInfo f in files)
                 {
-                    document.Load(tracklistingPath);
-                    LoadXml(document.DocumentElement);
-                    baseFolder = folderSelect.SelectedPath;
-                    baseFolderLabel.Content = baseFolder;
+                    if (f.Name == "TRACID.txt") continue;
+                    textFiles.Add(f.FullName);
+                }
 
-                    string trackStringFolderPath = folderSelect.SelectedPath + @"\Text\TRAC";
+                string[] ids = File.ReadAllText(trackStringFolderPath + @"\TRACID.txt").Split('\n');
+                string[] values = File.ReadAllText(trackStringFolderPath + @"\TRACE.txt").Split('\0');
 
-                    DirectoryInfo info = new DirectoryInfo(trackStringFolderPath);
+                for (int i = 0; i < ids.Length; ++i)
+                {
+                    ids[i] = ids[i].Trim('\r');
+                }
 
-                    FileInfo[] files = info.GetFiles();
-                    foreach (FileInfo f in files)
+                for (int i = 0; i < ids.Length; ++i)
+                {
+                    if (!tracStrings.ContainsKey(ids[i]) && ids[i] != string.Empty)
                     {
-                        if (f.Name == "TRACID.txt") continue;
-                        textFiles.Add(f.FullName);
+                        tracStrings.Add(ids[i], values[i]);
                     }
-
-                    string[] ids = File.ReadAllText(trackStringFolderPath + @"\TRACID.txt").Split('\n');
-                    string[] values = File.ReadAllText(trackStringFolderPath + @"\TRACE.txt").Split('\0');
-
-                    for (int i = 0; i < ids.Length; ++i)
-                    {
-                        ids[i] = ids[i].Trim('\r');
-                    }
-
-                    for (int i = 0; i < ids.Length; ++i)
-                    {
-                        if (!tracStrings.ContainsKey(ids[i]) && ids[i] != string.Empty)
-                        {
-                            tracStrings.Add(ids[i], values[i]);
-                        }
-                    }
-                    edited = true;
                 }
-                catch (XmlException error)
-                {
-                    string message = "ERROR: cannot load xml file.\nMake sure the file you selected is a valid song info file\n";
-                    message += error.Message;
-                    System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-                catch (PathTooLongException error)
-                {
-                    string message = "ERROR: Selected Path is too long.\n";
-                    message += error.Message;
-                    System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-                catch (IOException error)
-                {
-                    string message = "ERROR: Cannot open/read selected file.\n";
-                    message += error.Message;
-                    System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-                catch
-                {
-                    string message = "ERROR: Unhandled Exception when opening extracted files";
-                    System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                edited = true;
+            }
+            catch (XmlException error)
+            {
+                string message = "ERROR: cannot load xml file.\nMake sure the file you selected is a valid song info file\n";
+                message += error.Message;
+                System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (PathTooLongException error)
+            {
+                string message = "ERROR: Selected Path is too long.\n";
+                message += error.Message;
+                System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (IOException error)
+            {
+                string message = "ERROR: Cannot open/read selected file.\n";
+                message += error.Message;
+                System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch
+            {
+                string message = "ERROR: Unhandled Exception when opening extracted files";
+                System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -906,7 +922,7 @@ namespace DJHCP
         {
             TrackListing.ItemsSource = null;
             tracStrings.Clear();
-            foreach(var entry in entries)
+            foreach (var entry in entries)
             {
                 tracStrings.Add(entry.m_id, entry.m_value);
             }

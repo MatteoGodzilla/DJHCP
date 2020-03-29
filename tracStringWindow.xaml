@@ -7,12 +7,14 @@
         mc:Ignorable="d"
         Title="tracStringWindow" Height="500" Width="600" Closing="DialogClosing">
     <Grid>
-        <DataGrid x:Name="Grid" Margin="10" AutoGenerateColumns="False" >
+        <DataGrid x:Name="Grid" Margin="10,48,9.6,10.4" AutoGenerateColumns="False" >
             <DataGrid.Columns>
                 <DataGridTextColumn Header="id" Binding="{Binding m_id}"/>
                 <DataGridTextColumn Header="value" Binding="{Binding m_value}"/>
             </DataGrid.Columns>
         </DataGrid>
+        <TextBox x:Name="SearchBox" Margin="74,10,9.6,427.4" TextWrapping="Wrap" TextChanged="SearchBox_TextChanged"/>
+        <Label Content="Search:" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Height="33" Width="59"/>
 
     </Grid>
 </Window>

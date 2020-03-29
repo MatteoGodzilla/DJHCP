@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DJHCP"
         mc:Ignorable="d"
-        Title="DJHCP" Height="500" Width="800" Closing="Window_Closing" ResizeMode="CanResizeWithGrip">
+        Title="DJHCP v4.2" Height="500" Width="800" Closing="Window_Closing" ResizeMode="CanResizeWithGrip">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="107*"/>
@@ -14,7 +14,7 @@
         </Grid.ColumnDefinitions>
         <Button x:Name="Button" Content="Add Custom" Margin="6,0,4,27" Click="AddCustom" FontSize="20" IsDefault="True" AllowDrop="True" Drop="AddCustomButtonDrop" Height="88" VerticalAlignment="Bottom" Grid.Column="1"/>
         <DataGrid x:Name="TrackListing" Margin="10,70,4,120" 
-                    IsSynchronizedWithCurrentItem="False" AutoGenerateColumns="False" CanUserAddRows="False" CanUserReorderColumns="True" SelectionChanged="TrackListing_SelectionChanged" KeyUp="Tracklisting_confirmRemove" CanUserDeleteRows="False" Grid.ColumnSpan="2">
+                    IsSynchronizedWithCurrentItem="False" AutoGenerateColumns="False" CanUserAddRows="False" CanUserReorderColumns="True" SelectionChanged="TrackListing_SelectionChanged" KeyUp="Tracklisting_confirmRemove" CanUserDeleteRows="False" Grid.ColumnSpan="2" IsReadOnly="True">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Id" Binding="{Binding XPath=IDTag}"/>
                 <DataGridTextColumn Header="Folder location" Binding="{Binding XPath=FolderLocation}"/>
@@ -22,7 +22,7 @@
         </DataGrid>
         <Button Content="Update File" Margin="6,0,10,27" FontSize="20" Click="UpdateFile" Grid.Column="2" Height="88" VerticalAlignment="Bottom"/>
         <ListBox x:Name="proprieties" Margin="6,101,10,120" Grid.Column="2"/>
-        <Button Content="Open Extracted files" Margin="6,10,10,0" FontSize="20" Click="OpenExtractedFiles" Grid.Column="2" Height="55" VerticalAlignment="Top"/>
+        <Button Content="Open Extracted files" Margin="6,10,10,0" FontSize="20" Click="OpenExtractedFilesButtonClick" Grid.Column="2" Height="55" VerticalAlignment="Top"/>
         <TextBox x:Name="SearchBar" Margin="66,41,4,0" TextWrapping="Wrap" ToolTip="" TextChanged="SearchChanged" Height="23" VerticalAlignment="Top" Grid.ColumnSpan="2"/>
         <Label Content="Search:" Margin="10,42,0,0" HorizontalAlignment="Left" Width="57" Height="23" VerticalAlignment="Top"/>
         <Label Content="" HorizontalAlignment="Left" Margin="6,60,0,0" VerticalAlignment="Top" Grid.Column="2" Height="26" Width="10"/>
