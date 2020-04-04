@@ -312,24 +312,34 @@ namespace DJHCP
                     xml.Load(dialog.FileName);
                     LoadXml(xml.DocumentElement);
 
-                    string dir = new List<string>(Directory.EnumerateDirectories(dialog.FileName + @"\..\"))[0];
+                    string customRoot = dialog.FileName + @"\..\";
 
-                    List<string> tree = new List<string>(dir.Split('\\'));
-
-                    string dirName = tree[tree.Count - 1];
-
-                    DirectoryInfo files = new DirectoryInfo(dir);
-
-                    System.IO.Directory.CreateDirectory(baseFolder + @"\AUDIO\Audiotracks\" + dirName);
-
-                    var data = files.EnumerateFiles();
-
-                    foreach (FileInfo f in data)
+                    foreach (string fullDirPath in Directory.EnumerateDirectories(customRoot))
                     {
-                        string destinationPath = baseFolder + @"\AUDIO\Audiotracks\" + dirName + "\\" + f.Name;
-                        System.IO.File.Copy(f.FullName, destinationPath);
-                    }
+                        try
+                        {
+                            List<string> segmentedPath = new List<string>(fullDirPath.Split('\\'));
+                            string finalFolderName = segmentedPath[segmentedPath.Count - 1];
 
+                            //create folder inside extracted files
+                            Directory.CreateDirectory(baseFolder + @"\AUDIO\Audiotracks\" + finalFolderName);
+
+                            //copy files to that path
+                            DirectoryInfo files = new DirectoryInfo(fullDirPath);
+
+                            foreach (FileInfo f in files.EnumerateFiles())
+                            {
+                                string destinationPath = baseFolder + @"\AUDIO\Audiotracks\" + finalFolderName + "\\" + f.Name;
+                                File.Copy(f.FullName, destinationPath);
+                            }
+                        }
+                        catch (IOException error)
+                        {
+                            string message = "Warning: custom's files already present in base folder. Skipping\n";
+                            message += error.Message;
+                            System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        }
+                    }
                 }
                 catch (XmlException error)
                 {
@@ -342,12 +352,6 @@ namespace DJHCP
                     string message = "ERROR: Selected Path is too long.\n";
                     message += error.Message;
                     System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-                catch (IOException error)
-                {
-                    string message = "Warning: custom's files already present in base folder. Skipping\n";
-                    message += error.Message;
-                    System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
                 catch
                 {
