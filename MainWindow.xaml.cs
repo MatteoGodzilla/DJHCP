@@ -2,90 +2,15 @@
 using System.Windows.Forms;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Collections.ObjectModel;
 using System.Xml;
 using System.IO;
-using Newtonsoft.Json;
 using WK.Libraries.BetterFolderBrowserNS;
+using WK.Libraries.BetterFolderBrowserNS.Helpers;
+using WPFCustomMessageBox;
+using System.Text;
 
 namespace DJHCP
 {
-    public class Custom
-    {
-        public class Song
-        {
-            public class SongDetails
-            {
-                public string name { get; set; } = string.Empty;
-                public string artist { get; set; } = string.Empty;
-                public string album { get; set; } = string.Empty;
-                public string genre { get; set; } = string.Empty;
-                public int year { get; set; } = 0;
-            }
-            public SongDetails first;
-            public SongDetails second;
-            public string songId { get; set; } = string.Empty;
-            public string dj { get; set; } = string.Empty;
-            public string charter { get; set; } = string.Empty;
-            public double song_length { get; set; } = 0;
-            public double preview_start_time { get; set; } = 0;
-            public double preview_end_time { get; set; } = 0;
-        }
-        public class Difficulty
-        {
-            public class DeckSpeed
-            {
-                public double deckspeed_beginner { get; set; } = 0;
-                public double deckspeed_easy { get; set; } = 0;
-                public double deckspeed_medium { get; set; } = 0;
-                public double deckspeed_hard { get; set; } = 0;
-                public double deckspeed_expert { get; set; } = 0;
-
-            }
-            public class Complexity
-            {
-                public double track_complexity { get; set; } = 0;
-                public double tap_complexity { get; set; } = 0;
-                public double cross_complexity { get; set; } = 0;
-                public double scratch_complexity { get; set; } = 0;
-
-            }
-            public double bpm { get; set; } = 0;
-            public DeckSpeed deck_speed;
-            public Complexity complexity;
-        }
-
-        public class Extra
-        {
-            public class Megamix
-            {
-                public string playlist_track { get; set; } = string.Empty;
-                public string megamix_name { get; set; } = string.Empty;
-                public bool megamix_has_intro { get; set; } = false;
-                public double megamix_highway_offset { get; set; } = 0;
-                public bool megamix_transitions { get; set; } = false;
-            }
-            public class Id
-            {
-                public string id_name { get; set; } = string.Empty;
-                public string id_artist { get; set; } = string.Empty;
-                public string id_name2 { get; set; } = string.Empty;
-                public string id_artist2 { get; set; } = string.Empty;
-            }
-            public Megamix megamix;
-            public Id id;
-            public double env_start_time { get; set; } = 0;
-            public bool battle_music { get; set; } = false;
-            public bool guitar_mix { get; set; } = false;
-            public bool menu_music { get; set; } = false;
-            public string additional_xml { get; set; } = string.Empty;
-        }
-
-        public Song song;
-        public Difficulty difficulty;
-        public Extra extra;
-    }
-
     public partial class MainWindow : Window
     {
         public static List<XmlNode> totalNodes = new List<XmlNode>();
@@ -93,26 +18,15 @@ namespace DJHCP
         public string baseFolder = string.Empty;
         public List<string> textFiles = new List<string>();
         public Dictionary<string, string> tracStrings = new Dictionary<string, string>();
-        public bool edited = false;
+        public bool overwriteOne = false;
+        public bool overwriteAll = false;
 
         public MainWindow()
         {
             InitializeComponent();
-            initialLoad();
+            
         }
 
-        private void initialLoad()
-        {
-            try
-            {
-                baseFolder = System.IO.File.ReadAllText("config.txt");
-                if(baseFolder != string.Empty)
-                {
-                    LoadExtractedFromPath(baseFolder);
-                }
-            }
-            catch{}
-        }
         private int compareIds(XmlNode one, XmlNode two)
         {
             try
@@ -207,17 +121,43 @@ namespace DJHCP
                     if (node.Name == "Track")
                     {
                         bool present = false;
+                        string customId = node.SelectSingleNode("IDTag").InnerText;
+                        XmlNode needsRemoving = node;
                         foreach (XmlNode x in totalNodes)
                         {
-                            string customId = node.SelectSingleNode("IDTag").InnerText;
                             if (x.SelectSingleNode("IDTag").InnerText == customId)
                             {
                                 present = true;
-                                string message = "A song with the id " + customId + " is already present. Skipping entry";
-                                System.Windows.MessageBox.Show(message, "message");
+                                if (overwriteAll)
+                                {
+                                    needsRemoving = x;
+                                } else
+                                {
+                                    //Ask to overwrite
+
+                                    string message = "A song with the id " + customId + " is already present. Overwrite the data?";
+                                    MessageBoxResult res = CustomMessageBox.ShowYesNoCancel(message, "ID CONFLICT", "Overwrite All", "Overwrite just this one", "Ignore");
+                                    //YES = REPLACE ALL, NO = REPLACE SINGLE, CANCEL = IGNORE
+                                    if (res == MessageBoxResult.Yes)
+                                    {
+                                        //overwrite all
+                                        overwriteAll = true;
+                                        needsRemoving = x;
+                                    } else if (res == MessageBoxResult.No)
+                                    {
+                                        overwriteOne = true;
+                                        needsRemoving = x;
+                                    }
+                                }
+
                             }
                         }
-                        if (!present)
+                        if (overwriteOne || overwriteAll)
+                        {
+                            totalNodes.Remove(needsRemoving);
+                            totalNodes.Add(node);
+                        }
+                        else if (!present)
                         {
                             totalNodes.Add(node);
                         }
@@ -232,160 +172,151 @@ namespace DJHCP
 
         }
 
-        private void LoadJson(string path)
+        private void AddCustom(object sender, RoutedEventArgs e)
         {
-            string jsonText = File.ReadAllText(path);
-            Custom custom = JsonConvert.DeserializeObject<Custom>(jsonText);
-            string xml = "<Track ingame=\"true\" ondisc=\"true\" selectableinfem=\"yes\">";
-
-            xml += "<IDTag>" + custom.song.songId + "</IDTag>";
-            xml += "<LeaderboardId />";
-            xml += "<IsTutorialTrack>0</IsTutorialTrack>";
-            xml += "<HasVocalMarkup>0</HasVocalMarkup>";
-            xml += "<BPM>" + custom.difficulty.bpm + "</BPM>";
-            xml += @"<FolderLocation>AUDIO\Audiotracks\" + custom.song.songId + "</FolderLocation>";
-
-            xml += "<DeckSpeedMultiplier Difficulty=\"0\">" + custom.difficulty.deck_speed.deckspeed_beginner + "</DeckSpeedMultiplier>";
-            xml += "<DeckSpeedMultiplier Difficulty=\"1\">" + custom.difficulty.deck_speed.deckspeed_easy + "</DeckSpeedMultiplier>";
-            xml += "<DeckSpeedMultiplier Difficulty=\"2\">" + custom.difficulty.deck_speed.deckspeed_medium + "</DeckSpeedMultiplier>";
-            xml += "<DeckSpeedMultiplier Difficulty=\"3\">" + custom.difficulty.deck_speed.deckspeed_hard + "</DeckSpeedMultiplier>";
-            xml += "<DeckSpeedMultiplier Difficulty=\"4\">" + custom.difficulty.deck_speed.deckspeed_expert + "</DeckSpeedMultiplier>";
-            xml += "<PreviewLoopPointStartInBars>" + custom.song.preview_start_time + "</PreviewLoopPointStartInBars>";
-            xml += "<PreviewLoopPointEndInBars>" + custom.song.preview_end_time + "</PreviewLoopPointEndInBars>";
-
-            xml += "<TrackComplexity>" + custom.difficulty.complexity.track_complexity + "</TrackComplexity>";
-            xml += "<TapComplexity>" + custom.difficulty.complexity.tap_complexity + "</TapComplexity>";
-            xml += "<CrossfadeComplexity>" + custom.difficulty.complexity.cross_complexity + "</CrossfadeComplexity>";
-            xml += "<ScratchComplexity>" + custom.difficulty.complexity.scratch_complexity + "</ScratchComplexity>";
-
-            xml += "<MixArtist>" + custom.extra.id.id_artist + "</MixArtist>";
-            if (custom.extra.id.id_artist2 != string.Empty)
+            BetterFolderBrowserDialog dialog = new BetterFolderBrowserDialog();
+            dialog.Title = "Select root of customs:";
+            dialog.AllowMultiselect = true;
+            if (dialog.ShowDialog())
             {
-                xml += "<MixArtist>" + custom.extra.id.id_artist2 + "</MixArtist>";
+                overwriteAll = false;
+                foreach(string path in dialog.FileNames)
+                {
+                    overwriteOne = false;
+                    addData(path);
+                }
+                UpdateFile(null, null);
             }
 
-            xml += "<MixName>" + custom.extra.id.id_name + "</MixName>";
-            if (custom.extra.id.id_name2 != string.Empty)
+        }
+
+        private void CopyFolderRecursive(string source, string destination)
+        {
+            DirectoryInfo sourceFolder = new DirectoryInfo(source);
+            Directory.CreateDirectory(Path.Combine(destination,sourceFolder.Name));
+
+            foreach(FileInfo file in sourceFolder.GetFiles())
             {
-                xml += "<MixName>" + custom.extra.id.id_name2 + "</MixName>";
+                if(File.Exists(Path.Combine(destination, sourceFolder.Name, file.Name))){
+                    if (overwriteOne)
+                    {
+                        file.CopyTo(Path.Combine(destination, sourceFolder.Name, file.Name), true);
+                    }
+                } else {
+                    file.CopyTo(Path.Combine(destination, sourceFolder.Name, file.Name));
+                }
+                
             }
 
-            xml += "<TrackDuration>" + custom.song.song_length + "</TrackDuration>";
-            xml += custom.extra.additional_xml;
-            xml += "</Track>";
+            foreach(DirectoryInfo sub in sourceFolder.GetDirectories())
+            {
+                CopyFolderRecursive(Path.Combine(source,sub.Name), Path.Combine(destination,sourceFolder.Name));
+            }
+        }
 
+        private void addData(string path)
+        {
+            string customRoot = path;
 
-            XmlDocument document = new XmlDocument();
+            if (Directory.Exists(Path.Combine(path, "DJH2")))
+            {
+                //choose internal djh2 folder
+                customRoot = Path.Combine(path, "DJH2");
+            }
+
+            XmlDocument xml = new XmlDocument();
+            try
+            {
+                xml.Load(customRoot + @"\Info For Tracklisting.xml");
+                LoadXml(xml.DocumentElement);
+
+                foreach (string fullDirPath in Directory.EnumerateDirectories(customRoot))
+                {
+                    CopyFolderRecursive(fullDirPath, baseFolder + @"\AUDIO\Audiotracks\");
+                }
+            }
+            catch (XmlException error)
+            {
+                string message = "Error: cannot load xml file.\nMake sure the file you selected is a valid song info file\n";
+                message += error.Message;
+                System.Windows.MessageBox.Show(message, "Cannot load xml file", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch(DirectoryNotFoundException error)
+            {
+                string title = "Cannot find directory";
+                string message = "Error: cannot find direcory.\n";
+                message += error.Message;
+                System.Windows.MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch
+            {
+                string message = "Error: Unhandled exception in addData()";
+                System.Windows.MessageBox.Show(message, "Unknown error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
 
             try
             {
-                document.LoadXml(xml);
-                XmlNode node = document.DocumentElement;
-
-                TrackListing.ItemsSource = null;
-                totalNodes.Add(node);
-                updateList();
-                System.Windows.MessageBox.Show("Successfully added song to list", "Successfully added song to list");
-            }
-            catch (System.Xml.XmlException error)
-            {
-                System.Windows.MessageBox.Show("Error while adding song :" + error.Message,
-                    "Xml error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-
-        }
-
-        private void TrackListing_AddingNewItem(object sender, System.Windows.Controls.AddingNewItemEventArgs e)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        private void AddCustom(object sender, RoutedEventArgs e)
-        {
-            OpenFileDialog dialog = new OpenFileDialog();
-            dialog.Title = "Open 'info for tracklisting.xml'";
-            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                XmlDocument xml = new XmlDocument();
-                try
+                string namesPath = customRoot + @"\info for trac.csv";
+                StreamReader reader = new StreamReader(namesPath);
+                
+                string line = string.Empty;
+                while ((line = reader.ReadLine()) != null)
                 {
-                    xml.Load(dialog.FileName);
-                    LoadXml(xml.DocumentElement);
+                    if (line.Contains("//")) continue;
+                    if (string.IsNullOrEmpty(line)) continue;
 
-                    string customRoot = dialog.FileName + @"\..\";
-
-                    foreach (string fullDirPath in Directory.EnumerateDirectories(customRoot))
+                    List<string> content = new List<string> { "" };
+                    bool insideQuotes = false;
+                    char lastChar = '\0';
+                    foreach (char c in line)
                     {
-                        try
+                        if(c == '"')
                         {
-                            List<string> segmentedPath = new List<string>(fullDirPath.Split('\\'));
-                            string finalFolderName = segmentedPath[segmentedPath.Count - 1];
-
-                            //create folder inside extracted files
-                            Directory.CreateDirectory(baseFolder + @"\AUDIO\Audiotracks\" + finalFolderName);
-
-                            //copy files to that path
-                            DirectoryInfo files = new DirectoryInfo(fullDirPath);
-
-                            foreach (FileInfo f in files.EnumerateFiles())
+                            insideQuotes = !insideQuotes;
+                            if (lastChar == '"')
                             {
-                                string destinationPath = baseFolder + @"\AUDIO\Audiotracks\" + finalFolderName + "\\" + f.Name;
-                                File.Copy(f.FullName, destinationPath);
+                                content[content.Count - 1] += '"';
+                                lastChar = '\0';
+                            } else
+                            {
+                                lastChar = c;
                             }
                         }
-                        catch (IOException error)
+                        else if(c == ',' && !insideQuotes)
                         {
-                            string message = "Warning: custom's files already present in base folder. Skipping\n";
-                            message += error.Message;
-                            System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                            content.Add("");
+                            lastChar = c;
+                        } else
+                        {
+                            content[content.Count - 1] += c;
+                            lastChar = c;
                         }
                     }
-                }
-                catch (XmlException error)
-                {
-                    string message = "ERROR: cannot load xml file.\nMake sure the file you selected is a valid song info file\n";
-                    message += error.Message;
-                    System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-                catch (PathTooLongException error)
-                {
-                    string message = "ERROR: Selected Path is too long.\n";
-                    message += error.Message;
-                    System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-                catch
-                {
-                    string message = "Error: Unknown error";
-                    System.Windows.MessageBox.Show(message, "Parsing error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
 
-                try
-                {
-                    string namesPath = dialog.FileName + @"\..\info for trac.csv";
-                    StreamReader reader = new StreamReader(namesPath);
-
-                    string line = string.Empty;
-                    while ((line = reader.ReadLine()) != null)
+                    if(content.Count > 1)
                     {
-                        if (line.Contains("//")) continue;
-                        if (string.IsNullOrEmpty(line)) continue;
-                        string[] content;
-                        content = line.Split(',');
-                        if (!tracStrings.ContainsKey(content[0]))
+                        if (tracStrings.ContainsKey(content[0]))
+                        {
+                            if (overwriteOne || overwriteAll)
+                            {
+                                tracStrings[content[0]] = content[1];
+                            }
+                        }
+                        else
                         {
                             tracStrings.Add(content[0], content[1]);
                         }
                     }
                 }
-                catch (IOException error)
-                {
-                    string message = "Warning: \"info for trac.csv\" file not found\n";
-                    message += error.Message;
-                    System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                }
             }
-
+            catch (IOException error)
+            {
+                string message = "Warning: \"info for trac.csv\" file not found\n";
+                message += error.Message;
+                System.Windows.MessageBox.Show(message, "File not found", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
         }
+
         private void TrackListing_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
             if (TrackListing.SelectedIndex != -1)
@@ -572,31 +503,36 @@ namespace DJHCP
             {
                 if (baseFolder != string.Empty)
                 {
-
                     string path = baseFolder + @"\AUDIO\Audiotracks\tracklisting.xml";
-                    string s = string.Empty;
-                    s += "<TrackList>";
-                    foreach (XmlNode n in totalNodes)
-                    {
-                        s += "<Track ";
-                        foreach (XmlAttribute attribute in n.Attributes)
-                        {
-                            s += attribute.Name;
-                            s += "=\"";
-                            s += attribute.Value;
-                            s += "\" ";
-                        }
-                        s += ">";
-                        s += n.InnerXml;
-                        s += "</Track>";
-                    }
-                    s += "</TrackList>";
-                    File.WriteAllText(path, s);
 
-                    //saveRemoved();
+                    XmlDocument doc = new XmlDocument();
+                    
+                    XmlNode root = doc.CreateElement("TrackList");
+                    doc.AppendChild(root);
+
+                    for(int i = 0; i < totalNodes.Count; ++i)
+                    {
+                        XmlNode clone = totalNodes[i].Clone();
+                        root.AppendChild(doc.ImportNode(clone, true));
+                    }
+
+                    StringBuilder stringBuilder = new StringBuilder();
+                    XmlWriterSettings settings = new XmlWriterSettings
+                    {
+                        Indent = true,
+                        IndentChars = "  ",
+                        OmitXmlDeclaration = true
+                    };
+
+                    using (XmlWriter writer = XmlWriter.Create(stringBuilder, settings))
+                    {
+                        doc.WriteTo(writer);
+                    };
+
+                    File.WriteAllText(path, stringBuilder.ToString());
 
                     path = baseFolder + @"\Text\TRAC\";
-                    s = string.Empty;
+                    string s = string.Empty;
                     List<string> valueList = new List<string>(tracStrings.Values);
                     for (int i = 0; i < tracStrings.Count; ++i)
                     {
@@ -615,9 +551,6 @@ namespace DJHCP
                         s += keysList[i] + "\r\n";
                     }
                     File.WriteAllText(path + "TRACID.txt", s);
-
-                    System.Windows.MessageBox.Show("Done updating files", "Finished");
-                    edited = false;
                 }
             }
             catch
@@ -626,163 +559,6 @@ namespace DJHCP
                 System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
 
-        }
-
-        /*
-        private void Convert(object sender, RoutedEventArgs e)
-        {
-            OpenFileDialog dialog = new OpenFileDialog();
-            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                XmlDocument xml = new XmlDocument();
-                try
-                {
-                    xml.Load(dialog.FileName);
-
-                    //convert
-                    Custom conversion = new Custom();
-                    conversion.song.first.name = xml.SelectNodes("MixName")[0].InnerText;
-
-                    SaveFileDialog saveFileDialog = new SaveFileDialog();
-                    saveFileDialog.Title = "Save song.json";
-                    saveFileDialog.Filter = "json file|*.json";
-                    if (saveFileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                    {
-                        File.WriteAllText(saveFileDialog.FileName, JsonConvert.SerializeObject(conversion));
-                    }
-
-                }
-                catch (System.Xml.XmlException)
-                {
-                    System.Windows.MessageBox.Show("Cannot read file as Xml.\nMake sure the file is a valid Xml file",
-                        "Xml error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
-        }
-
-        private void Button_Drop(object sender, System.Windows.DragEventArgs e)
-        {
-            string[] paths = (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
-            XmlDocument xml = new XmlDocument();
-            try
-            {
-                xml.Load(paths[0]);
-
-                //convert
-                Custom conversion = new Custom();
-                conversion.song.first.name = xml.SelectNodes("MixName")[0].InnerText;
-
-                SaveFileDialog saveFileDialog = new SaveFileDialog();
-                saveFileDialog.Title = "Save song.json";
-                saveFileDialog.Filter = "json file|*.json";
-                if (saveFileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                {
-                    File.WriteAllText(saveFileDialog.FileName, JsonConvert.SerializeObject(conversion));
-                }
-
-            }
-            catch (XmlException error)
-            {
-                string message = "ERROR: cannot load xml file.\nMake sure the file you selected is a valid song info file\n";
-                message += error.Message;
-                System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (PathTooLongException error)
-            {
-                string message = "ERROR: Selected Path is too long.\n";
-                message += error.Message;
-                System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (IOException error)
-            {
-                string message = "ERROR: Cannot open/read selected file.\n";
-                message += error.Message;
-                System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch
-            {
-                string message = "Error: Unhandled Exception when loading custom";
-                System.Windows.MessageBox.Show(message, "Parsing error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-        */
-
-        private void AddCustomButtonDrop(object sender, System.Windows.DragEventArgs e)
-        {
-            string[] paths = (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
-
-            XmlDocument xml = new XmlDocument();
-            try
-            {
-                xml.Load(paths[0]);
-                LoadXml(xml.DocumentElement);
-
-                string dir = new List<string>(Directory.EnumerateDirectories(paths[0] + @"\..\"))[0];
-
-                List<string> tree = new List<string>(dir.Split('\\'));
-
-                string dirName = tree[tree.Count - 1];
-
-                DirectoryInfo files = new DirectoryInfo(dir);
-
-                System.IO.Directory.CreateDirectory(baseFolder + @"\AUDIO\Audiotracks\" + dirName);
-
-                var data = files.EnumerateFiles();
-
-                foreach (FileInfo f in data)
-                {
-                    string destinationPath = baseFolder + @"\AUDIO\Audiotracks\" + dirName + "\\" + f.Name;
-                    System.IO.File.Copy(f.FullName, destinationPath);
-                }
-                edited = true;
-            }
-            catch (XmlException error)
-            {
-                string message = "ERROR: cannot load xml file.\nMake sure the file you selected is a valid song info file\n";
-                message += error.Message;
-                System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (PathTooLongException error)
-            {
-                string message = "ERROR: Selected Path is too long.\n";
-                message += error.Message;
-                System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (IOException error)
-            {
-                string message = "Warning: custom's files already present in base folder. Skipping\n";
-                message += error.Message;
-                System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
-            catch
-            {
-                string message = "Error: Unhandled Exception when adding custom";
-                System.Windows.MessageBox.Show(message, "Parsing error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            try
-            {
-                string namesPath = paths[0] + @"\..\info for trac.csv";
-                StreamReader reader = new StreamReader(namesPath);
-                string line = string.Empty;
-                while ((line = reader.ReadLine()) != null)
-                {
-                    if (line.Contains("//")) continue;
-                    if (string.IsNullOrEmpty(line)) continue;
-                    string[] content;
-                    content = line.Split(',');
-                    if (!tracStrings.ContainsKey(content[0]))
-                    {
-                        tracStrings.Add(content[0], content[1]);
-                    }
-                }
-                System.Windows.MessageBox.Show("Successfully copied files into game", "Copied successfully");
-            }
-            catch (IOException error)
-            {
-                string message = "Warning: \"info for trac.csv\" file not found\n";
-                message += error.Message;
-                System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
         }
 
         private void Tracklisting_confirmRemove(object sender, System.Windows.Input.KeyEventArgs e)
@@ -799,11 +575,23 @@ namespace DJHCP
                     {
                         int index = TrackListing.Items.IndexOf(arrayList[i]);
                         TrackListing.ItemsSource = null;
-                        XmlNode removed = totalNodes[index];
+
+                        var node = (XmlNode)arrayList[i];
+                                                    
+                        if (node.SelectSingleNode("FolderLocation") != null)
+                        {
+                            string folder = "\\" + node.SelectSingleNode("FolderLocation").InnerText;
+                            try
+                            {
+                                Directory.Delete(baseFolder + folder, true);
+                            } catch (IOException exception)
+                            {
+                                System.Windows.MessageBox.Show(exception.Message);
+                            }
+                        }
                         totalNodes.RemoveAt(index);
-
+                        UpdateFile(null, null);
                         updateList();
-
                     }
                 }
             }
@@ -820,16 +608,7 @@ namespace DJHCP
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            //saveRemoved();
-            if (edited)
-            {
-                string text = "You have changes not applied to the files.\nDo you really want to close?";
-                if (System.Windows.MessageBox.Show(text, "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning)
-                    == MessageBoxResult.No)
-                {
-                    e.Cancel = true;
-                }
-            }
+            
         }
 
         private void OpenExtractedFilesButtonClick(object sender, RoutedEventArgs e)
@@ -848,10 +627,13 @@ namespace DJHCP
             XmlDocument document = new XmlDocument();
             try
             {
+                //backup
+                File.Copy(Path.Combine(path, "AUDIO", "Audiotracks", "tracklisting.xml"), Path.Combine(path, "AUDIO", "Audiotracks", "tracklisting-DJHCP-BAK.xml"),true);
+                CopyFolderRecursive(Path.Combine(path, "Text", "TRAC"), Path.Combine(path, "Text", "TRAC-BAK"));
+                
                 document.Load(tracklistingPath);
                 LoadXml(document.DocumentElement);
                 baseFolder = path;
-                System.IO.File.WriteAllText("config.txt", baseFolder);
 
                 baseFolderLabel.Content = baseFolder;
 
@@ -881,17 +663,10 @@ namespace DJHCP
                         tracStrings.Add(ids[i], values[i]);
                     }
                 }
-                edited = true;
             }
             catch (XmlException error)
             {
                 string message = "ERROR: cannot load xml file.\nMake sure the file you selected is a valid song info file\n";
-                message += error.Message;
-                System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (PathTooLongException error)
-            {
-                string message = "ERROR: Selected Path is too long.\n";
                 message += error.Message;
                 System.Windows.MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -931,6 +706,12 @@ namespace DJHCP
                 tracStrings.Add(entry.m_id, entry.m_value);
             }
             updateList();
+        }
+
+        private void TracklistingGenerator_Open(object sender, RoutedEventArgs e)
+        {
+            TracklistingGenerator window = new TracklistingGenerator();
+            window.Show();
         }
     }
 }
