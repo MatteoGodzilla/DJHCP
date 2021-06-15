@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Xml;
 using WK.Libraries.BetterFolderBrowserNS;
@@ -46,8 +47,14 @@ namespace DJHCP
             if (tbID.Text != string.Empty)
             {
                 XmlNode id = doc.CreateElement("IDTag");
-                id.InnerText = generateID(tbID.Text);
+                string trackID = generateID(tbID.Text);
+                id.InnerText = trackID;
                 track.AppendChild(id);
+
+                //location folder
+                XmlNode folder = doc.CreateElement("FolderLocation");
+                folder.InnerText = @"AUDIO\Audiotracks\" + trackID;
+                track.AppendChild(folder);
             }
             else notEnoughParameters = true;
 
@@ -56,8 +63,56 @@ namespace DJHCP
                 try
                 {
                     XmlNode bpm = doc.CreateElement("BPM");
-                    bpm.InnerText = int.Parse(tbBPM.Text).ToString();
+                    int BPM = int.Parse(tbBPM.Text);
+                    bpm.InnerText = BPM.ToString();
                     track.AppendChild(bpm);
+
+                    //deckspeed
+                    XmlNode speedBeginner = doc.CreateElement("DeckSpeedMultiplier");
+                    XmlNode speedEasy = doc.CreateElement("DeckSpeedMultiplier");
+                    XmlNode speedMedium = doc.CreateElement("DeckSpeedMultiplier");
+                    XmlNode speedHard = doc.CreateElement("DeckSpeedMultiplier");
+                    XmlNode speedExpert = doc.CreateElement("DeckSpeedMultiplier");
+
+                    XmlAttribute attrBeginner = doc.CreateAttribute("Difficulty");
+                    XmlAttribute attrEasy = doc.CreateAttribute("Difficulty");
+                    XmlAttribute attrMedium = doc.CreateAttribute("Difficulty");
+                    XmlAttribute attrHard = doc.CreateAttribute("Difficulty");
+                    XmlAttribute attrExpert = doc.CreateAttribute("Difficulty");
+
+                    attrBeginner.Value = "0";
+                    attrEasy.Value = "1";
+                    attrMedium.Value = "2";
+                    attrHard.Value = "3";
+                    attrExpert.Value = "4";
+
+                    speedBeginner.Attributes.Append(attrBeginner);
+                    speedEasy.Attributes.Append(attrEasy);
+                    speedMedium.Attributes.Append(attrMedium);
+                    speedHard.Attributes.Append(attrHard);
+                    speedExpert.Attributes.Append(attrExpert);
+
+                    if(tbDeckSpeed.Text == string.Empty)
+                    {
+                        speedBeginner.InnerText = (240.0 / BPM).ToString();
+                        speedEasy.InnerText = (240.0 / BPM).ToString();
+                        speedMedium.InnerText = (250.0 / BPM).ToString();
+                        speedHard.InnerText = (300.0 / BPM).ToString();
+                        speedExpert.InnerText = (400.0 / BPM).ToString();
+                    } else {
+                        int speed = int.Parse(tbDeckSpeed.Text);
+                        speedBeginner.InnerText = (speed / BPM).ToString();
+                        speedEasy.InnerText = (speed / BPM).ToString();
+                        speedMedium.InnerText = (speed / BPM).ToString();
+                        speedHard.InnerText = (speed / BPM).ToString();
+                        speedExpert.InnerText = (speed / BPM).ToString();
+                    }
+
+                    track.AppendChild(speedBeginner);
+                    track.AppendChild(speedEasy);
+                    track.AppendChild(speedMedium);
+                    track.AppendChild(speedHard);
+                    track.AppendChild(speedExpert);
                 }
                 catch
                 {
@@ -92,7 +147,6 @@ namespace DJHCP
                 XmlNode node = doc.CreateElement("MixName");
                 string id = generateID(tbS1.Text);
                 ids.Add(id);
-                string val = tbS1.Text.ToUpper();
                 data.Add(sanitize(tbS1.Text));
                 node.InnerText = id;
                 track.AppendChild(node);
@@ -104,7 +158,6 @@ namespace DJHCP
                 XmlNode node = doc.CreateElement("MixName");
                 string id = generateID(tbS2.Text);
                 ids.Add(id);
-                string val = tbS2.Text.ToUpper();
                 data.Add(sanitize(tbS2.Text));
                 node.InnerText = id;
                 track.AppendChild(node);
@@ -157,7 +210,8 @@ namespace DJHCP
                 {
                     invalidParameters = true;
                 }
-            }
+            } 
+            else notEnoughParameters = true;
 
             if (tbTapDiff.Text != string.Empty)
             {
@@ -172,6 +226,7 @@ namespace DJHCP
                     invalidParameters = true;
                 }
             }
+            else notEnoughParameters = true;
 
             if (tbScratchDiff.Text != string.Empty)
             {
@@ -186,6 +241,7 @@ namespace DJHCP
                     invalidParameters = true;
                 }
             }
+            else notEnoughParameters = true;
 
             if (tbCrossfadeDiff.Text != string.Empty)
             {
@@ -194,6 +250,21 @@ namespace DJHCP
                     XmlNode diff = doc.CreateElement("CrossfadeComplexity");
                     diff.InnerText = int.Parse(tbCrossfadeDiff.Text).ToString();
                     track.AppendChild(diff);
+                }
+                catch
+                {
+                    invalidParameters = true;
+                }
+            }
+            else notEnoughParameters = true;
+
+            if (tbSongDuration.Text != string.Empty)
+            {
+                try
+                {
+                    XmlNode length = doc.CreateElement("TrackDuration");
+                    length.InnerText = int.Parse(tbSongDuration.Text).ToString();
+                    track.AppendChild(length);
                 }
                 catch
                 {
@@ -256,16 +327,10 @@ namespace DJHCP
                         File.WriteAllText(Path.Combine(basePath, "DJH2", "Info For Tracklisting.xml"), tbXML.Text);
                         File.WriteAllText(Path.Combine(basePath, "DJH2", "Info For TRAC.csv"), tbCSV.Text);
                     }
-                    catch (IOException e)
-                    {
-                        //IO Exception
-                    }
                     catch
                     {
-                        //geneeral
+                        //general
                     }
-
-
                 }
             } else
             {
@@ -275,8 +340,7 @@ namespace DJHCP
 
         private string generateID(string value)
         {
-            string prefix = "DJHCP_";
-            return prefix + value.ToUpper().Replace(' ', '_').Replace(",", string.Empty).Replace("\"",string.Empty);
+            return value.ToUpper().Replace(' ', '_').Replace(",", string.Empty).Replace("\"",string.Empty);
         }
 
         private string sanitize(string value)

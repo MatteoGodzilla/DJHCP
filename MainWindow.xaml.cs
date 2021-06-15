@@ -551,6 +551,8 @@ namespace DJHCP
                         s += keysList[i] + "\r\n";
                     }
                     File.WriteAllText(path + "TRACID.txt", s);
+
+                    if (baseFolder.EndsWith("PS3")) RenameInside(baseFolder);
                 }
             }
             catch
@@ -712,6 +714,36 @@ namespace DJHCP
         {
             TracklistingGenerator window = new TracklistingGenerator();
             window.Show();
+        }
+
+        private void ToUpper_Click(object sender, RoutedEventArgs e)
+        {
+            RenameInside(baseFolder);
+            System.Windows.MessageBox.Show("Done Renaming Files", "Error", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void RenameInside(string path)
+        {
+            DirectoryInfo info = new DirectoryInfo(path);
+            FileInfo[] files = info.GetFiles();
+            DirectoryInfo[] directories = info.GetDirectories();
+
+            foreach(FileInfo f in files)
+            {
+                if(f.Name != f.Name.ToUpper())
+                    File.Move(Path.Combine(path, f.Name), Path.Combine(path,f.Name.ToUpper()));
+            }
+
+            foreach(DirectoryInfo directory in directories)
+            {
+                if(directory.Name != directory.Name.ToUpper())
+                {
+                    Directory.Move(Path.Combine(path, directory.Name), Path.Combine(path, directory.Name + "temp"));
+                    Directory.Move(Path.Combine(path, directory.Name + "temp"), Path.Combine(path, directory.Name.ToUpper()));
+                }
+                RenameInside(Path.Combine(path, directory.Name.ToUpper()));
+                //Path.Combine(path, directory.Name.ToUpper()) is the new path
+            }
         }
     }
 }

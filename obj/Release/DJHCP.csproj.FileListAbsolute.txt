@@ -25,7 +25,6 @@ C:\Users\Matteo\DJHCP\bin\Release\DJHCP.pdb
 C:\Users\Matteo\DJHCP\bin\Release\BetterFolderBrowser.xml
 C:\Users\Matteo\DJHCP\bin\Release\INIFileParser.xml
 C:\Users\Matteo\DJHCP\bin\Release\Newtonsoft.Json.xml
-C:\Users\Matteo\DJHCP\obj\Release\DJHCP.csprojAssemblyReference.cache
 C:\Users\Matteo\DJHCP\obj\Release\MainWindow.g.cs
 C:\Users\Matteo\DJHCP\obj\Release\tracStringWindow.g.cs
 C:\Users\Matteo\DJHCP\obj\Release\App.g.cs
@@ -48,3 +47,4 @@ C:\Users\Matteo\DJHCP\bin\Release\System.Threading.Tasks.Extensions.xml
 C:\Users\Matteo\DJHCP\obj\Release\TracklistingGenerator.baml
 C:\Users\Matteo\DJHCP\obj\Release\TracklistingGenerator.g.cs
 C:\Users\Matteo\DJHCP\bin\Release\WPFCustomMessageBox.xml
+C:\Users\Matteo\DJHCP\obj\Release\DJHCP.csproj.AssemblyReference.cache
