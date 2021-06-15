@@ -4,17 +4,17 @@
 winexe
 C#
 .cs
-C:\Users\Matteo\DJHCP\obj\Debug\
+c:\Users\Matteo\DJHCP\obj\Debug\
 DJHCP
 none
 false
 DEBUG;TRACE
-C:\Users\Matteo\DJHCP\App.xaml
-32036081581
+c:\Users\Matteo\DJHCP\App.xaml
+31001927556
 
-72057844168
-129-1080610410
+8-1287479052
+129847830526
 MainWindow.xaml;TracklistingGenerator.xaml;tracStringWindow.xaml;
 
-False
+True
 
