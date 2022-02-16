@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="DJHCP v5.1" Height="500" Width="800" Closing="Window_Closing" ResizeMode="CanResizeWithGrip">
+        Title="DJHCP v5.2" Height="500" Width="800" Closing="Window_Closing" ResizeMode="CanResizeWithGrip">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="1*"/>
