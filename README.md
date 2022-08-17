@@ -1,4 +1,6 @@
-# DJHCP
+# :warning: WARNING: THIS PROJECT IS NOT MAINTAINED ANYMORE. Please use [djhcpp](https://github.com/MatteoGodzilla/djhcpp) instead
+
+# DJHCP-Legacy (Formerly known as DJHCP)
 
 Dj Hero Control Panel for windows.
 Adding customs has never been this easy
